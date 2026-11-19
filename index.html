@@ -74,6 +74,11 @@ summary{cursor:pointer; font-size:.88rem;}
 hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .top-block{border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:28px; background:#fff;}
 .top-block.sub{margin-left:26px; border-left:3px solid var(--blue);}
+.top-block.done{background:#f7fbf8; border-color:#cfe8d8;}
+.top-block.done .top-title{opacity:.75;}
+.btn-done{width:34px; padding:6px 0; text-align:center; font-size:1rem; line-height:1;}
+.btn-done.active{background:#e3f4e9; color:var(--green); border-color:#bfe2cc;}
+.btn-timer.active{background:#fff3da; color:#8a5a00; border-color:#e0c48c;}
 .top-block .top-title{font-weight:600; margin-bottom:4px;}
 .block-bullets{list-style:disc; margin:4px 0 4px 20px; padding:0;}
 .block-bullets li{margin-bottom:4px;}
@@ -123,7 +128,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.3.0";
+SV.VERSION = "1.5.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -305,6 +310,14 @@ SV.i18n = {
       btn_mark_postponed: "als verschoben markieren",
       btn_mark_cancelled: "als gestrichen markieren",
       btn_reset_normal: "zurücksetzen auf normal",
+      tip_mark_done: "Als bearbeitet markieren",
+      tip_mark_undone: "Markierung als bearbeitet aufheben",
+      tip_timer_start: "Timer für diesen TOP starten",
+      tip_timer_stop: "Timer stoppen",
+      timer_running_label: "Timer läuft:",
+      btn_timer_stop_bar: "Timer stoppen",
+      label_show_timer_in_protocol: "Gemessene TOP-Zeiten in der vollständigen Fassung des Protokolls anzeigen",
+      pdf_duration_line: "Dauer: {0}",
       btn_complete_meeting: "Sitzung abschließen",
       btn_delete_meeting: "Sitzung löschen",
       confirm_complete_meeting: "Sitzung wirklich abschließen? Danach sind nur noch Protokoll-Korrekturen über 'Wieder öffnen' möglich.",
@@ -339,16 +352,22 @@ SV.i18n = {
       opt_portrait: "Hochformat", opt_landscape: "Querformat",
       daten_h1: "Datensicherung",
       backup_h2: "Sichern",
-      backup_desc: "Speichert alle Teams, Agenden und Sitzungen dieses Geräts in einer Datei. Passwortgeschützte Teams bleiben dabei verschlüsselt – zum Entsperren wird auf dem Zielgerät weiterhin dasselbe Passwort benötigt.",
+      backup_desc: "Speichert die Teams dieses Geräts als Datei(en) – je Team eine eigene Datei oder alle zusammen in einer Datei (einstellbar unten). Passwortgeschützte Teams bleiben dabei verschlüsselt – zum Entsperren wird auf dem Zielgerät weiterhin dasselbe Passwort benötigt.",
+      label_export_mode: "Export-Art",
+      opt_export_per_team: "Je Team eine Datei (empfohlen)",
+      opt_export_single: "Eine Datei für alle Teams",
       btn_backup_file: "Als Datei sichern",
       restore_h2: "Laden",
-      restore_desc: "Spielt eine zuvor gesicherte Datei ein (z.B. auf einem anderen Gerät, oder um ein Backup zurückzuspielen). Vorhandene Teams werden nicht überschrieben; bei Agenden/Sitzungen gewinnt jeweils der neuere Stand.",
+      restore_desc: "Spielt eine oder mehrere zuvor gesicherte Dateien ein (z.B. auf einem anderen Gerät, oder um ein Backup zurückzuspielen) – mehrere Team-Dateien lassen sich dabei gleichzeitig auswählen. Vorhandene Teams werden nicht überschrieben; bei Agenden/Sitzungen gewinnt jeweils der neuere Stand.",
       btn_load_file: "Datei laden",
       toast_select_file_first: "Bitte zuerst eine Datei auswählen.",
+      toast_no_teams_to_export: "Keine Teams zum Sichern vorhanden.",
       toast_invalid_json: "Datei ist kein gültiges JSON.",
       toast_import_done: "Import fertig: {0} neu, {1} aktualisiert, {2} übersprungen.",
+      toast_import_files_failed: "{0} Datei(en) konnten nicht gelesen werden.",
       toast_import_failed: "Import fehlgeschlagen: {0}",
       toast_export_done: "Datei wird heruntergeladen / zum Teilen angeboten.",
+      toast_export_done_many: "{0} Dateien werden heruntergeladen / zum Teilen angeboten.",
       err_unknown_format: "Unbekanntes Dateiformat",
       pdf_agenda_title: "Agenda: {0}",
       pdf_date_label: "Datum: {0}",
@@ -569,6 +588,14 @@ SV.i18n = {
       btn_mark_postponed: "mark as postponed",
       btn_mark_cancelled: "mark as cancelled",
       btn_reset_normal: "reset to normal",
+      tip_mark_done: "Mark as done",
+      tip_mark_undone: "Unmark as done",
+      tip_timer_start: "Start timer for this item",
+      tip_timer_stop: "Stop timer",
+      timer_running_label: "Timer running:",
+      btn_timer_stop_bar: "Stop timer",
+      label_show_timer_in_protocol: "Show measured item durations in the complete version of the minutes",
+      pdf_duration_line: "Duration: {0}",
       btn_complete_meeting: "Complete meeting",
       btn_delete_meeting: "Delete meeting",
       confirm_complete_meeting: "Really complete this meeting? Afterwards, corrections are only possible via 'Reopen'.",
@@ -603,16 +630,22 @@ SV.i18n = {
       opt_portrait: "Portrait", opt_landscape: "Landscape",
       daten_h1: "Backup",
       backup_h2: "Back up",
-      backup_desc: "Saves all teams, agendas and meetings of this device into a single file. Password-protected teams stay encrypted – the destination device still needs the same password to unlock them.",
+      backup_desc: "Saves the teams on this device as file(s) – one file per team, or all combined into a single file (adjustable below). Password-protected teams stay encrypted – the destination device still needs the same password to unlock them.",
+      label_export_mode: "Export mode",
+      opt_export_per_team: "One file per team (recommended)",
+      opt_export_single: "One file for all teams",
       btn_backup_file: "Save as file",
       restore_h2: "Restore",
-      restore_desc: "Loads a previously saved file (e.g. on another device, or to restore a backup). Existing teams are not overwritten; for agendas/meetings the newer version wins.",
+      restore_desc: "Loads one or more previously saved files (e.g. on another device, or to restore a backup) – several team files can be selected at once. Existing teams are not overwritten; for agendas/meetings the newer version wins.",
       btn_load_file: "Load file",
       toast_select_file_first: "Please select a file first.",
+      toast_no_teams_to_export: "No teams to back up.",
       toast_invalid_json: "File is not valid JSON.",
       toast_import_done: "Import done: {0} new, {1} updated, {2} skipped.",
+      toast_import_files_failed: "{0} file(s) could not be read.",
       toast_import_failed: "Import failed: {0}",
       toast_export_done: "File is being downloaded / offered for sharing.",
+      toast_export_done_many: "{0} files are being downloaded / offered for sharing.",
       err_unknown_format: "Unknown file format",
       pdf_agenda_title: "Agenda: {0}",
       pdf_date_label: "Date: {0}",
@@ -745,6 +778,12 @@ SV.util = {
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  },
+  // Macht einen Nutzertext (z.B. Teamname) dateinamensicher fuer Windows/Mac/Linux -
+  // ersetzt reservierte Zeichen, kuerzt auf eine vernuenftige Laenge.
+  safeFilenamePart(s){
+    const cleaned = String(s||"").trim().replace(/[\\/:*?"<>|]+/g, "-");
+    return cleaned.slice(0, 60) || "Team";
   },
   b64FromBytes(bytes){
     let bin = ""; const arr = new Uint8Array(bytes);
@@ -1048,6 +1087,19 @@ SV.store = {
     return { format:"meetingdb-export", version:1, exportedAt: SV.util.nowIso(), teams, agendas, meetings, attachments };
   },
 
+  // Export nur eines einzelnen Teams (fuer die Export-Art "je Team eine Datei") -
+  // gleiches Format wie exportAll, nur auf dieses Team eingeschraenkt. Anhaenge
+  // haben keinen eigenen teamId-Index (siehe deleteTeam oben) - ueber alle filtern.
+  async exportTeam(teamId){
+    const team = await SV.idb.get("teams", teamId);
+    if(!team) return null;
+    const agendas = await SV.idb.getAllByIndex("agendas", "teamId", teamId);
+    const meetings = await SV.idb.getAllByIndex("meetings", "teamId", teamId);
+    const allAttachments = await SV.idb.getAll("attachments");
+    const attachments = allAttachments.filter(at=>at.teamId===teamId);
+    return { format:"meetingdb-export", version:1, exportedAt: SV.util.nowIso(), teams:[team], agendas, meetings, attachments };
+  },
+
   async importAll(dump){
     if(!dump || (dump.format !== "meetingdb-export" && dump.format !== "sitzungsverwaltung-export")) throw new Error(SV.i18n.t("err_unknown_format"));
     const existingTeams = await SV.idb.getAll("teams");
@@ -1259,6 +1311,7 @@ SV.model = {
     return {
       id: SV.util.uuid(), title: title||"", parent_id: opts.parent_id||null, order: opts.order||0,
       public: opts.public !== undefined ? opts.public : true, status:"normal",
+      done: false, timerElapsedMs: 0, timerRunningSince: null,
       blocks: [], geloeschte_blocks: [], antraege: [], geloeschte_antraege: [],
       aufgaben: [], geloeschte_aufgaben: [],
       anhaenge: [], geloeschte_anhaenge: [],
@@ -1268,6 +1321,7 @@ SV.model = {
     return {
       id: SV.util.uuid(), date: date||"", title: title||"", agenda_id: agenda_id||null,
       status:"laufend", items: [], geloeschte_items: [], intro_note:"",
+      showTimerInProtocol: false,
       created_at: SV.util.nowIso(), completed_at: null,
     };
   },
@@ -1565,6 +1619,63 @@ SV.state = {
   get currentTeam(){ return SV.state.teams.find(t=>t.id===SV.state.currentTeamId) || null; },
 };
 
+/* ===================== TOP-Timer (laufende Stoppuhr pro Tagesordnungspunkt) =====================
+   "bearbeitet" (done) und der Timer sind bewusst unabhaengig voneinander (Nutzerentscheidung).
+   Pro Sitzung laeuft hoechstens ein Timer gleichzeitig: Starten eines TOP-Timers stoppt
+   automatisch einen zuvor laufenden anderen TOP-Timer derselben Sitzung. Der Startzeitpunkt
+   wird als ISO-Zeit gespeichert, damit der Timer nach einem Reload korrekt weiterlaeuft
+   (die angezeigte Zahl wird live aus "jetzt minus Startzeitpunkt" berechnet, nicht aus einem
+   ablaufenden Countdown). */
+SV.timer = {
+  tickHandle: null,
+  liveElapsedMs(item){
+    let ms = item.timerElapsedMs || 0;
+    if(item.timerRunningSince) ms += Date.now() - new Date(item.timerRunningSince).getTime();
+    return Math.max(0, ms);
+  },
+  fmt(ms){
+    const totalSec = Math.max(0, Math.round(ms/1000));
+    const h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+    const mm = String(m).padStart(2,"0"), ss = String(s).padStart(2,"0");
+    return h>0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+  },
+  clearTick(){
+    if(SV.timer.tickHandle){ clearInterval(SV.timer.tickHandle); SV.timer.tickHandle = null; }
+  },
+  // Sucht in der Sitzung den (hoechstens einen) laufenden TOP-Timer und aktualisiert die
+  // Anzeige im sticky Balken jede Sekunde per gezieltem DOM-Update (kein Re-Render - sonst
+  // wuerden offene Textfelder waehrend der Sitzung staendig unterbrochen).
+  startTickForMeeting(meeting){
+    SV.timer.clearTick();
+    const runningItem = (meeting.items||[]).find(it=>it.timerRunningSince);
+    if(!runningItem) return;
+    const el = SV.util.byId("runningTimerDisplay");
+    if(!el) return;
+    const update = ()=>{ el.textContent = SV.timer.fmt(SV.timer.liveElapsedMs(runningItem)); };
+    update();
+    SV.timer.tickHandle = setInterval(update, 1000);
+  },
+};
+
+/* ===================== App-Einstellungen (geraetelokal) =====================
+   Aktuell nur die Export-Art fuer die Datensicherung (siehe SV.actions.exportAll
+   weiter unten); liegt wie die Sprachauswahl (SV.i18n) in localStorage, pro
+   Geraet. Voreinstellung "je Team eine Datei" auf Nutzerwunsch. */
+SV.settings = {
+  EXPORT_MODE_KEY: "mdb-export-mode",
+  exportMode: "perTeam",
+  init(){
+    try{
+      const saved = localStorage.getItem(SV.settings.EXPORT_MODE_KEY);
+      if(saved==="single" || saved==="perTeam") SV.settings.exportMode = saved;
+    }catch(e){}
+  },
+  setExportMode(mode){
+    SV.settings.exportMode = (mode==="single") ? "single" : "perTeam";
+    try{ localStorage.setItem(SV.settings.EXPORT_MODE_KEY, SV.settings.exportMode); }catch(e){}
+  },
+};
+
 SV.ui = {
   toastEl: null,
   toast(msg){
@@ -1606,6 +1717,7 @@ SV.router = {
   routes: {},
   on(pattern, handler){ SV.router.routes[pattern] = handler; },
   async go(){
+    SV.timer.clearTick();
     const hash = (location.hash || "#/teams").replace(/^#/, "");
     const [path, qs] = hash.split("?");
     const query = {};
@@ -2247,11 +2359,17 @@ SV.views.meetingRun = async function(app, meetingId){
   const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
 
   const itemHtml = numbered.map(({item,number,depth})=>`
-    <div class="top-block ${depth?'sub':''}" id="top-${item.id}">
+    <div class="top-block ${depth?'sub':''} ${item.done?'done':''}" id="top-${item.id}">
       <div class="row" style="align-items:center;">
         <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
-        <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}"></div>
+        <div style="flex:0;">
+          <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
+        </div>
+        <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}" style="${item.done?'opacity:.6;':''}"></div>
         <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('meeting','${meeting.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
+        <div style="flex:0;">
+          <button class="secondary btn-timer ${item.timerRunningSince?'active':''}" title="${item.timerRunningSince?SV.t('tip_timer_stop'):SV.t('tip_timer_start')}" onclick="SV.actions.toggleItemTimer('${meeting.id}','${item.id}')">⏱${item.timerRunningSince||item.timerElapsedMs?' '+SV.timer.fmt(SV.timer.liveElapsedMs(item)):''}</button>
+        </div>
       </div>
       <div class="small muted" style="margin-top:2px;">
         ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
@@ -2276,6 +2394,14 @@ SV.views.meetingRun = async function(app, meetingId){
       </div>
     </div>`).join("");
 
+  const runningItem = (meeting.items||[]).find(it=>it.timerRunningSince);
+  const runningTimerBar = runningItem ? `
+    <div id="runningTimerBar" class="card" style="background:#fff3da; border-color:#e0c48c; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <strong style="margin:0;">⏱ ${SV.t("timer_running_label")} ${SV.util.esc(runningItem.title)}</strong>
+      <span id="runningTimerDisplay" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.1rem; font-weight:600; color:#8a5a00;">00:00</span>
+      <button class="secondary" style="margin-left:auto;" onclick="SV.actions.toggleItemTimer('${meeting.id}','${runningItem.id}')">${SV.t("btn_timer_stop_bar")}</button>
+    </div>` : "";
+
   const trashItems = (meeting.geloeschte_items||[]).length ? `
     <div class="card"><details><summary>${SV.t("deleted_items_summary", meeting.geloeschte_items.length)}</summary>
       ${meeting.geloeschte_items.map(it=>`<div class="list-item small">${SV.util.esc(it.title)}
@@ -2284,12 +2410,17 @@ SV.views.meetingRun = async function(app, meetingId){
 
   app.innerHTML = `
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
+    ${runningTimerBar}
     <div class="card">
       <form class="row" onsubmit="SV.actions.updateMeetingMeta(event,'${meeting.id}')">
         <div><label>${SV.t("label_title")}</label><input type="text" id="editMeetingTitle" required value="${SV.util.esc(meeting.title)}"></div>
         <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editMeetingDate" value="${SV.util.esc(meeting.date)}"></div>
         <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
       </form>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
+        <input type="checkbox" id="editMeetingShowTimer" ${meeting.showTimerInProtocol?'checked':''} style="width:auto;" onchange="SV.actions.toggleShowTimerInProtocol('${meeting.id}', this.checked)">
+        <span class="small muted" style="margin:0;">${SV.t("label_show_timer_in_protocol")}</span>
+      </label>
     </div>
     ${itemHtml || `<p class="muted">${SV.t("no_items_yet")}</p>`}
     <div class="card">
@@ -2306,6 +2437,7 @@ SV.views.meetingRun = async function(app, meetingId){
     </div>
   `;
   SV.util.installAutoGrow(app);
+  SV.timer.startTickForMeeting(meeting);
 };
 
 SV.actions.updateMeetingMeta = async function(ev, meetingId){
@@ -2314,6 +2446,40 @@ SV.actions.updateMeetingMeta = async function(ev, meetingId){
   const date = SV.util.byId("editMeetingDate").value;
   if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
   await SV.actions._mutate("meeting", meetingId, (c)=>{ c.title=title; c.date=date; });
+  SV.router.go();
+};
+SV.actions.toggleShowTimerInProtocol = async function(meetingId, checked){
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.showTimerInProtocol = !!checked; });
+  // Kein volles Re-Render noetig (keine sichtbare Aenderung ausser der Checkbox selbst,
+  // die bereits den richtigen Zustand zeigt) - so bleibt ein offenes Textfeld unangetastet.
+};
+SV.actions.toggleItemDone = async function(meetingId, itemId){
+  await SV.actions._mutate("meeting", meetingId, (c)=>{
+    const it = (c.items||[]).find(x=>x.id===itemId);
+    if(it) it.done = !it.done;
+  });
+  SV.router.go();
+};
+SV.actions.toggleItemTimer = async function(meetingId, itemId){
+  await SV.actions._mutate("meeting", meetingId, (c)=>{
+    const nowMs = Date.now();
+    const target = (c.items||[]).find(x=>x.id===itemId);
+    if(!target) return;
+    // Nur ein TOP-Timer gleichzeitig: einen anderen laufenden Timer in dieser Sitzung
+    // zuerst stoppen und seine Zeit sichern.
+    (c.items||[]).forEach(it=>{
+      if(it.id!==itemId && it.timerRunningSince){
+        it.timerElapsedMs = (it.timerElapsedMs||0) + (nowMs - new Date(it.timerRunningSince).getTime());
+        it.timerRunningSince = null;
+      }
+    });
+    if(target.timerRunningSince){
+      target.timerElapsedMs = (target.timerElapsedMs||0) + (nowMs - new Date(target.timerRunningSince).getTime());
+      target.timerRunningSince = null;
+    } else {
+      target.timerRunningSince = SV.util.nowIso();
+    }
+  });
   SV.router.go();
 };
 SV.actions.completeMeeting = async function(meetingId){
@@ -2558,34 +2724,71 @@ SV.views.daten = async function(app){
     <div class="card">
       <h2>${SV.t("backup_h2")}</h2>
       <p class="muted small">${SV.t("backup_desc")}</p>
+      <label class="small" style="display:block; margin-bottom:10px;">${SV.t("label_export_mode")}<br>
+        <select id="exportModeSelect" onchange="SV.actions.setExportMode(this.value)">
+          <option value="perTeam" ${SV.settings.exportMode==="perTeam"?"selected":""}>${SV.t("opt_export_per_team")}</option>
+          <option value="single" ${SV.settings.exportMode==="single"?"selected":""}>${SV.t("opt_export_single")}</option>
+        </select>
+      </label>
       <button onclick="SV.actions.exportAll()">${SV.t("btn_backup_file")}</button>
     </div>
     <div class="card">
       <h2>${SV.t("restore_h2")}</h2>
       <p class="muted small">${SV.t("restore_desc")}</p>
-      <input type="file" id="importFile" accept=".json,.meetingdb.json,.sitzung.json">
+      <input type="file" id="importFile" accept=".json,.meetingdb.json,.sitzung.json" multiple>
       <button class="secondary" style="margin-top:8px;" onclick="SV.actions.importAll()">${SV.t("btn_load_file")}</button>
     </div>
   `;
 };
-SV.actions.exportAll = async function(){
-  const dump = await SV.store.exportAll();
-  const blob = new Blob([JSON.stringify(dump)], {type:"application/json"});
-  const stamp = SV.util.nowIso().slice(0,10);
-  SV.util.downloadBlob(blob, `meetingdb-${stamp}.meetingdb.json`);
-  SV.ui.toast(SV.t("toast_export_done"));
+SV.actions.setExportMode = function(mode){
+  SV.settings.setExportMode(mode);
+  SV.router.go();
 };
+// Exportiert je nach Einstellung (SV.settings.exportMode) entweder eine
+// gemeinsame Datei fuer alle Teams, oder eine eigene Datei pro Team (Default,
+// auf Nutzerwunsch - erleichtert z.B. die Weitergabe eines einzelnen Teams).
+SV.actions.exportAll = async function(){
+  const teams = await SV.idb.getAll("teams");
+  if(!teams.length){ SV.ui.toast(SV.t("toast_no_teams_to_export")); return; }
+  const stamp = SV.util.nowIso().slice(0,10);
+  if(SV.settings.exportMode === "single"){
+    const dump = await SV.store.exportAll();
+    const blob = new Blob([JSON.stringify(dump)], {type:"application/json"});
+    SV.util.downloadBlob(blob, `meetingdb-${stamp}.meetingdb.json`);
+    SV.ui.toast(SV.t("toast_export_done"));
+    return;
+  }
+  for(const team of teams){
+    const dump = await SV.store.exportTeam(team.id);
+    if(!dump) continue;
+    const blob = new Blob([JSON.stringify(dump)], {type:"application/json"});
+    SV.util.downloadBlob(blob, `meetingdb-${SV.util.safeFilenamePart(team.name)}-${stamp}.meetingdb.json`);
+  }
+  SV.ui.toast(teams.length===1 ? SV.t("toast_export_done") : SV.t("toast_export_done_many", teams.length));
+};
+// Liest eine oder mehrere ausgewaehlte Dateien ein (z.B. mehrere Team-Dateien
+// auf einmal) und summiert das Ergebnis; eine einzelne nicht lesbare Datei
+// bricht den restlichen Import nicht ab.
 SV.actions.importAll = async function(){
   const fileEl = SV.util.byId("importFile");
-  if(!fileEl.files.length){ SV.ui.toast(SV.t("toast_select_file_first")); return; }
-  const text = await fileEl.files[0].text();
-  let dump;
-  try{ dump = JSON.parse(text); }catch(e){ SV.ui.toast(SV.t("toast_invalid_json")); return; }
-  try{
-    const res = await SV.store.importAll(dump);
-    SV.ui.toast(SV.t("toast_import_done", res.added, res.updated, res.skipped));
-    SV.router.go();
-  }catch(e){ SV.ui.toast(SV.t("toast_import_failed", e.message)); }
+  const files = Array.from(fileEl.files || []);
+  if(!files.length){ SV.ui.toast(SV.t("toast_select_file_first")); return; }
+  let added=0, updated=0, skipped=0, failed=0;
+  for(const file of files){
+    let dump;
+    try{
+      const text = await file.text();
+      dump = JSON.parse(text);
+    }catch(e){ failed++; continue; }
+    try{
+      const res = await SV.store.importAll(dump);
+      added += res.added; updated += res.updated; skipped += res.skipped;
+    }catch(e){ failed++; }
+  }
+  let msg = SV.t("toast_import_done", added, updated, skipped);
+  if(failed>0) msg += " " + SV.t("toast_import_files_failed", failed);
+  SV.ui.toast(msg);
+  SV.router.go();
 };
 
 /* ===================== PDF-Export (jsPDF) ===================== */
@@ -2811,6 +3014,10 @@ SV.pdf = {
     SV.model.numberedItems(meeting.items).forEach(({item,number,depth})=>{
       if(!full && !item.public) return;
       SV.pdf.text(state, `${number}. ${item.title}`, {bold:true, size:12.5, indent:depth*6, before:4});
+      if(full && meeting.showTimerInProtocol){
+        const ms = SV.timer.liveElapsedMs(item);
+        if(ms > 0) SV.pdf.text(state, SV.t("pdf_duration_line", SV.timer.fmt(ms)), {indent:depth*6+4, size:9.5, after:2});
+      }
       item.blocks.forEach(b=> SV.pdf.segments(state, b.content, depth*6+4));
       item.antraege.forEach(a=>{
         SV.pdf.text(state, SV.t("pdf_antrag_label"), {bold:true, indent:depth*6+4, before:2});
@@ -3336,6 +3543,7 @@ SV.app = {
   },
   init(){
     SV.i18n.init();
+    SV.settings.init();
     SV.app.registerSW();
     SV.router.go();
   },
