@@ -1,0 +1,3346 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#215aa5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>meetingdb</title>
+<style>
+:root{
+  --blue:#215aa5; --blue-dark:#17407a; --bg:#f4f6f8; --card:#ffffff;
+  --border:#dde3e8; --text:#1d2630; --muted:#66747f; --danger:#b23b3b;
+  --danger-bg:#fbeaea; --green:#2e8f5a; --tag-bg:#e8eef6;
+  --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px; line-height:1.45;}
+body{padding-top:var(--safe-t); padding-bottom:var(--safe-b);
+  padding-left:var(--safe-l); padding-right:var(--safe-r);}
+a{color:var(--blue);}
+h1,h2,h3{margin:0 0 10px 0; line-height:1.25;}
+h1{font-size:1.4rem;} h2{font-size:1.1rem;} h3{font-size:1rem;}
+#topbar{position:sticky; top:0; z-index:20; background:var(--blue); color:#fff;
+  padding:calc(10px + var(--safe-t)) calc(14px + var(--safe-r)) 10px calc(14px + var(--safe-l));
+  margin-top:calc(-1 * var(--safe-t));
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+#topbar .brand{font-weight:600; font-size:1.05rem; margin-right:auto;}
+#topbar button, #topbar .pill{background:rgba(255,255,255,.14); color:#fff; border:1px solid rgba(255,255,255,.4);
+  border-radius:16px; padding:6px 12px; font-size:.85rem; cursor:pointer;}
+#topbar button:hover{background:rgba(255,255,255,.24);}
+nav#tabs{display:flex; gap:4px; overflow-x:auto; background:var(--blue-dark); padding:0 calc(10px + var(--safe-l));
+  position:sticky; top:0; z-index:19;}
+nav#tabs button{background:none; border:none; color:#dce8f8; padding:10px 12px; font-size:.88rem;
+  cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap;}
+nav#tabs button.active{color:#fff; border-bottom-color:#fff; font-weight:600;}
+#updatebar{display:none; background:#2e8f5a; color:#fff; text-align:center; padding:8px; font-size:.9rem; cursor:pointer;}
+#app{max-width:900px; margin:0 auto; padding:14px calc(14px + var(--safe-r)) 40px calc(14px + var(--safe-l));}
+.card{background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px;}
+.muted{color:var(--muted);}
+.small{font-size:.85rem;}
+.row{display:flex; gap:10px; align-items:end; flex-wrap:wrap;}
+.row > *{flex:1; min-width:140px;}
+.btn-row{display:flex; flex:none; gap:8px; flex-wrap:wrap;}
+label{display:block; font-size:.82rem; color:var(--muted); margin-bottom:3px;}
+input[type=text], input[type=date], input[type=number], input[type=password], input[type=search],
+select, textarea{
+  width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px; font-size:.95rem;
+  background:#fff; color:var(--text); font-family:inherit;}
+textarea{resize:none; overflow-y:hidden; min-height:2.4em;}
+button, .btn{display:inline-block; background:var(--blue); color:#fff; border:none; border-radius:7px;
+  padding:8px 14px; font-size:.9rem; cursor:pointer; text-decoration:none;}
+button:hover, .btn:hover{background:var(--blue-dark);}
+button.secondary, .btn.secondary{background:#eef1f4; color:var(--text); border:1px solid var(--border);}
+button.secondary:hover{background:#e3e8ed;}
+button.danger{background:var(--danger-bg); color:var(--danger); border:1px solid #f0c7c7;}
+button.danger:hover{background:#f6dada;}
+button:disabled{opacity:.5; cursor:default;}
+.list-item{border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:8px; background:#fbfcfd;}
+.actions{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+.tag{display:inline-block; background:var(--tag-bg); color:var(--blue-dark); border-radius:12px;
+  padding:2px 10px; font-size:.78rem; margin-left:6px;}
+.tag.status{background:#fff3da; color:#8a5a00;}
+.tag.done{background:#e3f4e9; color:var(--green);}
+details{margin-top:8px;}
+summary{cursor:pointer; font-size:.88rem;}
+hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
+.top-block{border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:28px; background:#fff;}
+.top-block.sub{margin-left:26px; border-left:3px solid var(--blue);}
+.top-block .top-title{font-weight:600; margin-bottom:4px;}
+.block-bullets{list-style:disc; margin:4px 0 4px 20px; padding:0;}
+.block-bullets li{margin-bottom:4px;}
+.block-sublist{list-style:none; margin:2px 0; padding:0; text-indent:-14px; padding-left:14px;}
+.toolbar{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0;}
+.center{text-align:center;}
+#helpdlg{max-width:640px; width:92vw;}
+#helpdlg::backdrop{background:rgba(0,0,0,.45);}
+dialog{border:none; border-radius:10px; padding:0; box-shadow:0 8px 30px rgba(0,0,0,.25);}
+.dlg-body{padding:16px; max-height:75vh; overflow:auto;}
+.dlg-tabs{display:flex; border-bottom:1px solid var(--border);}
+.dlg-tabs button{flex:1; background:none; color:var(--text); border-radius:0; border-bottom:3px solid transparent;}
+.dlg-tabs button.active{border-bottom-color:var(--blue); font-weight:600; background:none; color:var(--blue);}
+.pdf-opts{display:flex; gap:14px; flex-wrap:wrap; margin:8px 0;}
+.lock-icon{opacity:.75;}
+table.plain{width:100%; border-collapse:collapse; font-size:.85rem;}
+table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; text-align:left; vertical-align:top;}
+@media (max-width:480px){
+  #app{padding-left:10px; padding-right:10px;}
+  .row > *{min-width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div id="updatebar" onclick="SV.app.applyUpdate()"></div>
+
+<div id="topbar">
+  <div class="brand">📋 meetingdb</div>
+  <span class="pill" id="teamPill" onclick="SV.actions.logoutTeam()" title="Team wechseln / abmelden" style="cursor:pointer;">kein Team</span>
+  <button id="langBtn" class="secondary" onclick="SV.i18n.toggle()" title="Sprache wechseln / switch language">EN</button>
+  <button id="helpBtn" onclick="SV.ui.openHelp()">?</button>
+</div>
+<nav id="tabs"></nav>
+<div id="app"></div>
+
+<dialog id="helpdlg">
+  <div class="dlg-tabs" id="helpTabs"></div>
+  <div class="dlg-body" id="helpBody"></div>
+  <div style="padding:10px 16px;"><button id="helpCloseBtn" class="secondary" onclick="document.getElementById('helpdlg').close()">Schließen</button></div>
+</dialog>
+
+<script src="jspdf.umd.min.js"></script>
+<script src="pdf-lib.min.js"></script>
+<script src="jszip.min.js"></script>
+<script src="pdf.min.js"></script>
+<script>
+"use strict";
+const SV = {};
+SV.VERSION = "1.3.0";
+if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
+
+/* ===================== Sprache / Übersetzung (i18n) =====================
+   Deutsch ist und bleibt die Referenzsprache (DICT.de); Englisch ist eine
+   zusätzliche, vollständige Übersetzung der kompletten Oberfläche (Nav,
+   Hilfe, alle Formulare/Buttons/Labels, Meldungen, PDF-Beschriftungen).
+   Gespeicherte Fachdaten (Titel, Texte, die Nutzer selbst eingegeben haben)
+   werden NIE übersetzt - nur die App-eigene Beschriftung. */
+SV.i18n = {
+  STORAGE_KEY: "mdb-lang",
+  lang: "de",
+  init(){
+    try{
+      const saved = localStorage.getItem(SV.i18n.STORAGE_KEY);
+      if(saved==="en" || saved==="de") SV.i18n.lang = saved;
+    }catch(e){}
+    SV.i18n.apply();
+  },
+  setLang(lang){
+    SV.i18n.lang = (lang==="en") ? "en" : "de";
+    try{ localStorage.setItem(SV.i18n.STORAGE_KEY, SV.i18n.lang); }catch(e){}
+    SV.i18n.apply();
+    SV.router.go();
+  },
+  toggle(){ SV.i18n.setLang(SV.i18n.lang==="de" ? "en" : "de"); },
+  // Aktualisiert die statischen Chrome-Elemente, die NICHT durch SV.router.go()
+  // neu gerendert werden (liegen ausserhalb von #app/#tabs).
+  apply(){
+    document.documentElement.lang = SV.i18n.lang;
+    const btn = SV.util.byId("langBtn");
+    if(btn){
+      btn.textContent = SV.i18n.lang==="de" ? "EN" : "DE";
+      btn.title = SV.i18n.lang==="de" ? "Switch to English" : "Auf Deutsch umschalten";
+    }
+    const ub = SV.util.byId("updatebar");
+    if(ub) ub.textContent = SV.t("updatebar_text");
+    const hc = SV.util.byId("helpCloseBtn");
+    if(hc) hc.textContent = SV.t("help_close");
+  },
+  t(key, ...args){
+    let s = (SV.i18n.DICT.en && SV.i18n.lang==="en" && SV.i18n.DICT.en[key] !== undefined) ? SV.i18n.DICT.en[key] : SV.i18n.DICT.de[key];
+    if(s === undefined) s = key;
+    args.forEach((a,i)=>{ s = s.split("{"+i+"}").join(a); });
+    return s;
+  },
+  DICT: {
+    de: {
+      updatebar_text: "Neue Version bereit – zum Aktualisieren tippen",
+      help_close: "Schließen",
+      team_pill_none: "kein Team",
+      team_pill_title: "Team wechseln / abmelden",
+      nav_agendas: "Agenden", nav_meetings: "Sitzungen", nav_beschluesse: "Beschlüsse",
+      nav_aufgaben: "Aufgaben", nav_daten: "Datensicherung", nav_teams: "Teams",
+      err_page_not_found: "Seite nicht gefunden.",
+      team_locked_title: "Team gesperrt",
+      team_locked_body: "Dieses Team ist passwortgeschützt. Bitte wieder anmelden.",
+      to_teams: "Zu den Teams",
+      generic_error_title: "Fehler",
+      teams_h1: "Teams",
+      teams_intro: "Jedes Team speichert seine Daten getrennt, nur auf diesem Gerät. Ein Team kann zusätzlich mit einem Passwort geschützt werden.",
+      teams_new_h2: "Neues Team anlegen",
+      label_name: "Name",
+      placeholder_team_name: "z.B. Volleyball-Abteilung",
+      label_password_optional: "Passwort (optional)",
+      btn_create: "Anlegen",
+      teams_existing_h2: "Vorhandene Teams",
+      tag_active: "aktiv",
+      label_password: "Passwort",
+      btn_unlock: "Entsperren",
+      btn_select: "Auswählen",
+      btn_delete: "Löschen",
+      teams_none: "Noch keine Teams angelegt.",
+      toast_team_created: "Team angelegt.",
+      toast_wrong_password: "Falsches Passwort.",
+      toast_unlock_first: "Zum Löschen bitte zuerst entsperren.",
+      confirm_delete_team: 'Team "{0}" inkl. aller Agenden und Sitzungen wirklich löschen?',
+      blocks_summary: "📝 Textblöcke ({0})",
+      btn_save: "Speichern",
+      deleted_blocks_summary: "Gelöschte Textblöcke ({0}) – wiederherstellen",
+      btn_restore: "Wiederherstellen",
+      placeholder_block_text: "Text, optional mit '-' für Aufzählungen...",
+      btn_add_block_more: "+ weiteren Textblock hinzufügen",
+      btn_add_block: "Textblock hinzufügen",
+      tasks_summary: "✅ Aufgaben ({0})",
+      label_responsible: "Verantwortlich",
+      label_due: "Termin",
+      label_status: "Status",
+      deleted_tasks_summary: "Gelöschte Aufgaben ({0}) – wiederherstellen",
+      label_task: "Aufgabe",
+      btn_add_task_more: "+ weitere Aufgabe",
+      btn_add_task: "Aufgabe hinzufügen",
+      toast_task_required: "Text, Verantwortliche(r) und Termin sind Pflicht.",
+      status_neu: "Neu", status_in_arbeit: "In Arbeit", status_zurueckgestellt: "Zurückgestellt",
+      status_gestoppt: "Gestoppt", status_erledigt: "Erledigt",
+      antraege_summary: "⚖️ Anträge/Beschlüsse ({0})",
+      label_antrag: "Antrag", label_beschluss: "Beschluss", label_ergebnis: "Ergebnis",
+      label_dafuer: "Dafür", label_dagegen: "Dagegen", label_enthaltung: "Enthaltung",
+      deleted_antraege_summary: "Gelöschte Anträge/Beschlüsse ({0}) – wiederherstellen",
+      btn_add_antrag_more: "+ weiterer Antrag/Beschluss",
+      btn_add_antrag: "Antrag/Beschluss hinzufügen",
+      erg_offen: "offen", erg_angenommen: "angenommen", erg_abgelehnt: "abgelehnt",
+      erg_vertagt: "vertagt", erg_zurueckgezogen: "zurückgezogen",
+      attachments_summary: "📎 Anhänge ({0})",
+      tag_not_in_pdf: "nicht in PDF",
+      label_caption_optional: "Bildunterschrift (optional)",
+      label_display_in_protocol: "Anzeige im Protokoll",
+      opt_in_attachment: "im Anhang",
+      opt_hidden: "verborgen (nicht in PDF)",
+      label_show_filename: "Dateiname zusätzlich anzeigen",
+      deleted_attachments_summary: "Gelöschte Anhänge ({0}) – wiederherstellen",
+      label_file_img_pdf: "Datei (Bild oder PDF)",
+      btn_add_attachment_more: "+ weiteren Anhang hinzufügen",
+      btn_add_attachment: "Anhang hinzufügen",
+      toast_select_file: "Bitte eine Datei auswählen.",
+      toast_unsupported_filetype: "Nicht unterstützter Dateityp (nur Bild oder PDF).",
+      toast_team_locked: "Team ist gesperrt.",
+      toast_file_save_failed: "Datei konnte nicht gespeichert werden.",
+      toast_attachment_not_found: "Anhang nicht gefunden.",
+      toast_attachment_open_failed: "Anhang konnte nicht geöffnet werden.",
+      agendas_h1: "Agenden",
+      agendas_search_h2: "Nach Datum suchen",
+      label_date: "Datum",
+      btn_search: "Suchen",
+      btn_reset: "Zurücksetzen",
+      agenda_new_h2: "Neue Agenda anlegen",
+      agenda_new_hint: "Zum Termine-Planen kann das Datum offen bleiben – der Titel ist immer Pflicht.",
+      label_title: "Titel",
+      placeholder_agenda_title: "z.B. Sitzung Leitungsteam",
+      label_date_optional: "Datum (optional)",
+      agendas_at_date_h2: "Agenden am {0}",
+      agendas_all_h2: "Alle Agenden",
+      agendas_none: "Keine Agenden gefunden.",
+      no_date: "(kein Datum)",
+      no_title: "(ohne Titel)",
+      items_count: "{0} Tagesordnungspunkt(e)",
+      tag_already_started_once: "bereits gestartet",
+      tag_already_started_n: "{0}× bereits gestartet",
+      btn_edit: "Bearbeiten",
+      btn_start_meeting_again: "Erneut als Sitzung starten",
+      btn_start_meeting: "Sitzung starten",
+      started_from: "Daraus gestartet: ",
+      status_done_label: "abgeschlossen",
+      status_running_label: "läuft noch",
+      old_agendas_summary: "Alte Agenden ({0}) – bereits als Vorlage für mindestens eine Sitzung genutzt",
+      old_agendas_hint: "Die Agenda selbst wird beim Starten einer Sitzung nicht verändert und bleibt als Vorlage erhalten.",
+      back_to_agendas: "← zurück zu den Agenden",
+      agenda_edit_h1: "Agenda bearbeiten",
+      agenda_not_found: "Agenda nicht gefunden.",
+      back_generic: "Zurück",
+      agenda_items_h2: "Tagesordnungspunkte",
+      no_items_yet: "Noch keine Punkte.",
+      new_agenda_item_label: "Neuer Tagesordnungspunkt",
+      label_public_checkbox: "öffentlich",
+      btn_add: "Hinzufügen",
+      deleted_items_summary: "Gelöschte Tagesordnungspunkte ({0}) – wiederherstellen",
+      title_promote: "Höher stufen",
+      title_demote: "Tiefer stufen",
+      btn_mark_private: "als nicht-öffentlich markieren",
+      btn_mark_public: "als öffentlich markieren",
+      tag_not_public: "nicht öffentlich",
+      btn_agenda_pdf: "Agenda als PDF",
+      toast_title_required: "Titel darf nicht leer sein.",
+      confirm_delete_agenda: "Diese Agenda wirklich löschen?",
+      confirm_delete_item: "Diesen Tagesordnungspunkt wirklich löschen?",
+      err_item_has_children: "Dieser Punkt hat eigene Unterpunkte und kann nicht eingerückt werden.",
+      meetings_h1: "Sitzungen",
+      meeting_new_h2: "Neue Sitzung ohne Agenda anlegen",
+      meetings_all_h2: "Alle Sitzungen",
+      meetings_none: "Keine Sitzungen vorhanden.",
+      btn_open: "Öffnen",
+      status_running_tag: "läuft",
+      import_old_h2: "Altprotokoll importieren",
+      import_old_desc: "Word (.docx), OpenDocument (.odt), PDF oder Excel (.xlsx) – wird in eine Sitzung mit erkannten Beschlüssen/Aufgaben umgewandelt, mit Vorschau zum Nachkorrigieren vor dem Speichern.",
+      btn_import_old: "Altprotokoll importieren…",
+      confirm_delete_meeting: "Diese Sitzung wirklich löschen?",
+      meeting_not_found: "Sitzung nicht gefunden.",
+      back_to_meetings: "← zurück zu den Sitzungen",
+      status_label_normal: "normal", status_label_verschoben: "verschoben", status_label_gestrichen: "gestrichen",
+      btn_mark_postponed: "als verschoben markieren",
+      btn_mark_cancelled: "als gestrichen markieren",
+      btn_reset_normal: "zurücksetzen auf normal",
+      btn_complete_meeting: "Sitzung abschließen",
+      btn_delete_meeting: "Sitzung löschen",
+      confirm_complete_meeting: "Sitzung wirklich abschließen? Danach sind nur noch Protokoll-Korrekturen über 'Wieder öffnen' möglich.",
+      confirm_reopen_meeting: "Protokoll wirklich wieder öffnen und bearbeitbar machen?",
+      btn_pdf_public: "PDF (öffentliche Fassung)",
+      btn_pdf_full: "PDF (vollständige Fassung)",
+      reopen_summary: "🔓 Protokoll wieder öffnen (z.B. um einen Tippfehler nachträglich zu korrigieren)",
+      reopen_hint: 'Setzt die Sitzung zurück auf "laufend" – danach lässt sich alles wie gewohnt bearbeiten.',
+      btn_reopen: "Wieder öffnen",
+      completed_on: " am {0}",
+      beschlussliste_h1: "Beschlussliste",
+      label_search: "Suche",
+      beschluesse_none: "Keine Beschlüsse gefunden.",
+      link_jump_to_protocol: "zum Protokoll springen",
+      label_pdf_format: "PDF-Format",
+      opt_ausfuehrlich: "Ausführlich",
+      opt_tabelle: "Tabelle (kompakt)",
+      btn_export_pdf: "Als PDF exportieren",
+      aufgaben_h1: "Aufgaben",
+      teams_h2: "Teams",
+      label_locked_suffix: "(gesperrt)",
+      label_sort_by: "Sortieren nach",
+      opt_sort_termin: "Termin", opt_sort_team: "Team", opt_sort_status: "Status",
+      opt_sort_verantwortlich: "Verantwortliche(r)",
+      label_due_until_optional: "Termin bis (optional)",
+      label_hide_done: "erledigte ausblenden",
+      btn_apply: "Anwenden",
+      aufgaben_none: "Keine Aufgaben gefunden.",
+      placeholder_add_comment: "Kommentar hinzufügen...",
+      link_jump_to_protocol_agenda: "zum Protokoll/zur Agenda springen",
+      label_orientation: "Ausrichtung",
+      opt_portrait: "Hochformat", opt_landscape: "Querformat",
+      daten_h1: "Datensicherung",
+      backup_h2: "Sichern",
+      backup_desc: "Speichert alle Teams, Agenden und Sitzungen dieses Geräts in einer Datei. Passwortgeschützte Teams bleiben dabei verschlüsselt – zum Entsperren wird auf dem Zielgerät weiterhin dasselbe Passwort benötigt.",
+      btn_backup_file: "Als Datei sichern",
+      restore_h2: "Laden",
+      restore_desc: "Spielt eine zuvor gesicherte Datei ein (z.B. auf einem anderen Gerät, oder um ein Backup zurückzuspielen). Vorhandene Teams werden nicht überschrieben; bei Agenden/Sitzungen gewinnt jeweils der neuere Stand.",
+      btn_load_file: "Datei laden",
+      toast_select_file_first: "Bitte zuerst eine Datei auswählen.",
+      toast_invalid_json: "Datei ist kein gültiges JSON.",
+      toast_import_done: "Import fertig: {0} neu, {1} aktualisiert, {2} übersprungen.",
+      toast_import_failed: "Import fehlgeschlagen: {0}",
+      toast_export_done: "Datei wird heruntergeladen / zum Teilen angeboten.",
+      err_unknown_format: "Unbekanntes Dateiformat",
+      pdf_agenda_title: "Agenda: {0}",
+      pdf_date_label: "Datum: {0}",
+      pdf_not_public_suffix: " (nicht öffentlich)",
+      pdf_see_attachment: "Siehe Anhang {0} ({1}).",
+      pdf_attachment_label_n: "Anhang {0}: {1}",
+      pdf_protocol_title: "Protokoll: {0}",
+      pdf_full_version: " · vollständige Fassung",
+      pdf_public_version: " · öffentliche Fassung",
+      pdf_antrag_label: "Antrag:",
+      pdf_beschluss_label: "Beschluss:",
+      pdf_ergebnis_line: "Ergebnis: {0} (Dafür {1}, Dagegen {2}, Enthaltung {3})",
+      pdf_aufgabe_label: "Aufgabe:",
+      pdf_aufgabe_line: "Verantwortlich: {0} · Termin: {1} · Status: {2}",
+      pdf_beschlussliste_title: "Beschlussliste",
+      pdf_aufgabenliste_title: "Aufgabenliste",
+      pdf_col_date: "Datum", pdf_col_top: "TOP", pdf_col_antrag: "Antrag", pdf_col_beschluss: "Beschluss",
+      pdf_col_ergebnis: "Ergebnis", pdf_col_team: "Team", pdf_col_aufgabe: "Aufgabe",
+      pdf_col_verantwortlich: "Verantwortlich", pdf_col_termin: "Termin", pdf_col_status: "Status",
+      pdf_insert_failed: "{0} – konnte nicht eingefügt werden.",
+      pdf_filename_agenda: "Agenda_{0}.pdf",
+      pdf_filename_protocol: "Protokoll_{0}{1}.pdf",
+      pdf_filename_public_suffix: "_oeffentlich",
+      pdf_filename_no_date: "ohne-datum",
+      pdf_filename_beschlussliste: "Beschlussliste.pdf",
+      pdf_filename_aufgabenliste: "Aufgabenliste.pdf",
+      img_load_error: "Bild konnte nicht gelesen werden.",
+      err_xml_not_found: "{0} nicht in der Datei gefunden (keine gültige bzw. unterstützte Datei?).",
+      err_docx_no_body: "word/document.xml ohne Textkörper.",
+      err_odt_no_body: "content.xml ohne Textkörper.",
+      err_no_sheets: "Keine Tabellenblätter in der Datei gefunden.",
+      err_unsupported_fileformat: "Nicht unterstütztes Dateiformat (nur .docx, .odt, .pdf, .xlsx).",
+      seg_default_title: "Allgemein / Einleitung",
+      import_start_h1: "Altprotokoll importieren",
+      import_start_desc: "Unterstützt: Word (.docx), OpenDocument-Text (.odt), PDF, Excel (.xlsx). Die Datei wird nur in diesem Browser gelesen, nichts wird hochgeladen. Nach dem Einlesen folgt eine Vorschau zum Prüfen und Nachkorrigieren – vor allem erkannte Beschlüsse lassen sich dort einzeln bestätigen, bearbeiten oder verwerfen, bevor irgendetwas gespeichert wird.",
+      label_file: "Datei",
+      label_meeting_title: "Titel der Sitzung",
+      placeholder_import_title: "z. B. Protokoll Leitungsteam",
+      btn_read_file: "Datei einlesen",
+      status_reading_file: "Lese Datei ein…",
+      status_no_usable_text: "In der Datei wurde kein verwendbarer Text gefunden.",
+      status_read_error: "Fehler beim Einlesen: {0}",
+      import_review_title: "Vorschau: Import aus „{0}“",
+      import_review_hint: "Alles unten lässt sich noch bearbeiten. Nach dem Speichern ist die Sitzung „abgeschlossen“ (wie ein normales Protokoll) und lässt sich jederzeit über „Protokoll wieder öffnen“ erneut bearbeiten – z. B. um einen übersehenen Beschluss von Hand nachzutragen.",
+      label_use_as_beschluss: "als Beschluss übernehmen",
+      tag_uncertain: "unsicher – bitte prüfen",
+      label_use_as_aufgabe: "als Aufgabe übernehmen",
+      label_keep_item: "diesen Tagesordnungspunkt übernehmen",
+      label_full_text: "Volltext (wird als Textblock übernommen)",
+      heading_detected_beschluesse: "Erkannte Beschlüsse",
+      heading_detected_aufgaben: "Erkannte Aufgaben",
+      btn_import_commit: "Import abschließen und speichern",
+      btn_cancel: "Abbrechen",
+      toast_need_one_item: "Mindestens ein Tagesordnungspunkt muss übernommen werden.",
+      help_tab_bedienung: "Bedienung",
+      help_tab_installation: "Installation",
+      help_tab_datenschutz: "Datenschutz & Haftung",
+      help_tab_ueber: "Über diese App",
+      help_html_bedienung: `
+        <h3>Teams</h3>
+        <p>Jedes Team speichert seine Daten getrennt, nur auf diesem Gerät. Optional mit Passwort schützbar – oben rechts kann man das Team wechseln bzw. sich abmelden.</p>
+        <h3>Agenden &amp; Sitzungen</h3>
+        <p>Eine Agenda ist eine Vorlage mit Tagesordnungspunkten (Titel immer Pflicht, Datum optional – zum Termine-Planen). Mit "Sitzung starten" wird daraus eine laufende Sitzung – die Agenda selbst bleibt dabei unverändert als Vorlage bestehen und erscheint danach im Bereich "Alte Agenden".</p>
+        <p>Tagesordnungspunkte lassen sich mit ← / → eine Ebene höher/tiefer stufen, in laufenden Sitzungen zusätzlich mit ↑ / ↓ verschieben. Innerhalb eines Punkts: Textblöcke (mit "-" oder "1., 2., ..." für Aufzählungen, auch verschachtelt), Anträge/Beschlüsse mit Abstimmungsergebnis, und Aufgaben mit Verantwortlichem und Termin.</p>
+        <h3>Abschließen &amp; wieder öffnen</h3>
+        <p>"Sitzung abschließen" sperrt das Protokoll gegen versehentliches Bearbeiten. Für nachträgliche Korrekturen lässt es sich über "Protokoll wieder öffnen" erneut bearbeitbar machen.</p>
+        <h3>Beschlussliste &amp; Aufgaben</h3>
+        <p>Die Beschlussliste zeigt alle Anträge/Beschlüsse des aktuellen Teams. Die Aufgabenliste zeigt Aufgaben teamübergreifend (über alle entsperrten Teams) mit Filtern, Status/Termin direkt bearbeitbar, und PDF-Export (Hoch-/Querformat wählbar).</p>
+        <h3>Sprache</h3>
+        <p>Oben rechts lässt sich die Oberfläche zwischen Deutsch und Englisch umschalten (DE/EN-Taste). Die Einstellung wird auf diesem Gerät gespeichert. Bereits eingegebene Texte werden dabei nicht übersetzt.</p>
+      `,
+      help_html_installation: `<p>Diese App lässt sich wie eine normale App installieren:</p>
+      <p><strong>iPad/iPhone:</strong> Seite in Safari öffnen → Teilen □↑ → „Zum Home-Bildschirm" → Hinzufügen.</p>
+      <p><strong>Mac:</strong> Safari → Ablage → „Zum Dock hinzufügen" (ab macOS Sonoma), oder Lesezeichen.</p>
+      <p><strong>Android:</strong> In Chrome öffnen → ⋮ → „App installieren".</p>
+      <p><strong>Windows:</strong> Edge/Chrome → Installieren-Symbol in der Adressleiste.</p>
+      <p class="muted small">Nach einem Update erscheint oben eine grüne Leiste „Neue Version bereit" – zum Übernehmen antippen.</p>`,
+      help_html_datenschutz: `
+      <p>Alle Eingaben (Teams, Agenden, Sitzungen, Beschlüsse, Aufgaben) bleiben ausschließlich auf diesem Gerät, im Speicher dieses Browsers – es gibt keinen Server, der diese Daten sieht. Die Seite wird bei GitHub gehostet, das beim Aufruf technische Daten (z.B. IP-Adresse) verarbeitet.</p>
+      <p>Passwortgeschützte Teams werden mit einem aus dem Passwort abgeleiteten Schlüssel (PBKDF2 + AES-GCM) im Browser verschlüsselt gespeichert. Das Passwort selbst wird nirgends gespeichert.</p>
+      <p>Es gibt keine automatische Synchronisation zwischen Geräten. Über "Datensicherung" lässt sich der Datenbestand bewusst als Datei exportieren/importieren.</p>
+      <p>Diese App wird ohne Gewähr bereitgestellt; für Datenverlust (z.B. durch Löschen des Browser-Speichers) wird keine Haftung übernommen – regelmäßige Datensicherung wird empfohlen.</p>
+    `,
+      help_html_ueber: `<p>Private, kostenlose App ohne Werbung. Kontakt und Rückmeldungen: github.com/app-laden.</p><p class="muted small">Version ${SV.VERSION}</p>`,
+    },
+    en: {
+      updatebar_text: "New version ready – tap to update",
+      help_close: "Close",
+      team_pill_none: "no team",
+      team_pill_title: "Switch / sign out team",
+      nav_agendas: "Agendas", nav_meetings: "Meetings", nav_beschluesse: "Resolutions",
+      nav_aufgaben: "Tasks", nav_daten: "Backup", nav_teams: "Teams",
+      err_page_not_found: "Page not found.",
+      team_locked_title: "Team locked",
+      team_locked_body: "This team is password-protected. Please sign in again.",
+      to_teams: "Go to teams",
+      generic_error_title: "Error",
+      teams_h1: "Teams",
+      teams_intro: "Each team stores its data separately, only on this device. A team can additionally be protected with a password.",
+      teams_new_h2: "Create new team",
+      label_name: "Name",
+      placeholder_team_name: "e.g. Volleyball department",
+      label_password_optional: "Password (optional)",
+      btn_create: "Create",
+      teams_existing_h2: "Existing teams",
+      tag_active: "active",
+      label_password: "Password",
+      btn_unlock: "Unlock",
+      btn_select: "Select",
+      btn_delete: "Delete",
+      teams_none: "No teams created yet.",
+      toast_team_created: "Team created.",
+      toast_wrong_password: "Wrong password.",
+      toast_unlock_first: "Please unlock first before deleting.",
+      confirm_delete_team: 'Really delete team "{0}" including all its agendas and meetings?',
+      blocks_summary: "📝 Text blocks ({0})",
+      btn_save: "Save",
+      deleted_blocks_summary: "Deleted text blocks ({0}) – restore",
+      btn_restore: "Restore",
+      placeholder_block_text: "Text, optionally with '-' for bullet lists...",
+      btn_add_block_more: "+ add another text block",
+      btn_add_block: "Add text block",
+      tasks_summary: "✅ Tasks ({0})",
+      label_responsible: "Responsible",
+      label_due: "Due date",
+      label_status: "Status",
+      deleted_tasks_summary: "Deleted tasks ({0}) – restore",
+      label_task: "Task",
+      btn_add_task_more: "+ add another task",
+      btn_add_task: "Add task",
+      toast_task_required: "Text, person responsible and due date are required.",
+      status_neu: "New", status_in_arbeit: "In progress", status_zurueckgestellt: "Deferred",
+      status_gestoppt: "Stopped", status_erledigt: "Done",
+      antraege_summary: "⚖️ Motions/Resolutions ({0})",
+      label_antrag: "Motion", label_beschluss: "Resolution", label_ergebnis: "Outcome",
+      label_dafuer: "For", label_dagegen: "Against", label_enthaltung: "Abstention",
+      deleted_antraege_summary: "Deleted motions/resolutions ({0}) – restore",
+      btn_add_antrag_more: "+ add another motion/resolution",
+      btn_add_antrag: "Add motion/resolution",
+      erg_offen: "open", erg_angenommen: "approved", erg_abgelehnt: "rejected",
+      erg_vertagt: "postponed", erg_zurueckgezogen: "withdrawn",
+      attachments_summary: "📎 Attachments ({0})",
+      tag_not_in_pdf: "not in PDF",
+      label_caption_optional: "Caption (optional)",
+      label_display_in_protocol: "Display in minutes",
+      opt_in_attachment: "in attachment",
+      opt_hidden: "hidden (not in PDF)",
+      label_show_filename: "Also show file name",
+      deleted_attachments_summary: "Deleted attachments ({0}) – restore",
+      label_file_img_pdf: "File (image or PDF)",
+      btn_add_attachment_more: "+ add another attachment",
+      btn_add_attachment: "Add attachment",
+      toast_select_file: "Please select a file.",
+      toast_unsupported_filetype: "Unsupported file type (image or PDF only).",
+      toast_team_locked: "Team is locked.",
+      toast_file_save_failed: "File could not be saved.",
+      toast_attachment_not_found: "Attachment not found.",
+      toast_attachment_open_failed: "Attachment could not be opened.",
+      agendas_h1: "Agendas",
+      agendas_search_h2: "Search by date",
+      label_date: "Date",
+      btn_search: "Search",
+      btn_reset: "Reset",
+      agenda_new_h2: "Create new agenda",
+      agenda_new_hint: "For scheduling purposes the date can stay empty – the title is always required.",
+      label_title: "Title",
+      placeholder_agenda_title: "e.g. Management team meeting",
+      label_date_optional: "Date (optional)",
+      agendas_at_date_h2: "Agendas on {0}",
+      agendas_all_h2: "All agendas",
+      agendas_none: "No agendas found.",
+      no_date: "(no date)",
+      no_title: "(untitled)",
+      items_count: "{0} agenda item(s)",
+      tag_already_started_once: "already started",
+      tag_already_started_n: "already started {0}×",
+      btn_edit: "Edit",
+      btn_start_meeting_again: "Start as meeting again",
+      btn_start_meeting: "Start meeting",
+      started_from: "Started from: ",
+      status_done_label: "completed",
+      status_running_label: "still running",
+      old_agendas_summary: "Old agendas ({0}) – already used as template for at least one meeting",
+      old_agendas_hint: "The agenda itself is not changed when a meeting is started and remains available as a template.",
+      back_to_agendas: "← back to agendas",
+      agenda_edit_h1: "Edit agenda",
+      agenda_not_found: "Agenda not found.",
+      back_generic: "Back",
+      agenda_items_h2: "Agenda items",
+      no_items_yet: "No items yet.",
+      new_agenda_item_label: "New agenda item",
+      label_public_checkbox: "public",
+      btn_add: "Add",
+      deleted_items_summary: "Deleted agenda items ({0}) – restore",
+      title_promote: "Promote one level",
+      title_demote: "Demote one level",
+      btn_mark_private: "mark as non-public",
+      btn_mark_public: "mark as public",
+      tag_not_public: "not public",
+      btn_agenda_pdf: "Agenda as PDF",
+      toast_title_required: "Title must not be empty.",
+      confirm_delete_agenda: "Really delete this agenda?",
+      confirm_delete_item: "Really delete this agenda item?",
+      err_item_has_children: "This item has its own sub-items and cannot be indented.",
+      meetings_h1: "Meetings",
+      meeting_new_h2: "Create new meeting without agenda",
+      meetings_all_h2: "All meetings",
+      meetings_none: "No meetings yet.",
+      btn_open: "Open",
+      status_running_tag: "running",
+      import_old_h2: "Import old minutes",
+      import_old_desc: "Word (.docx), OpenDocument (.odt), PDF or Excel (.xlsx) – gets converted into a meeting with detected resolutions/tasks, with a preview to correct before saving.",
+      btn_import_old: "Import old minutes…",
+      confirm_delete_meeting: "Really delete this meeting?",
+      meeting_not_found: "Meeting not found.",
+      back_to_meetings: "← back to meetings",
+      status_label_normal: "normal", status_label_verschoben: "postponed", status_label_gestrichen: "cancelled",
+      btn_mark_postponed: "mark as postponed",
+      btn_mark_cancelled: "mark as cancelled",
+      btn_reset_normal: "reset to normal",
+      btn_complete_meeting: "Complete meeting",
+      btn_delete_meeting: "Delete meeting",
+      confirm_complete_meeting: "Really complete this meeting? Afterwards, corrections are only possible via 'Reopen'.",
+      confirm_reopen_meeting: "Really reopen the minutes and make them editable again?",
+      btn_pdf_public: "PDF (public version)",
+      btn_pdf_full: "PDF (complete version)",
+      reopen_summary: "🔓 Reopen minutes (e.g. to fix a typo afterwards)",
+      reopen_hint: 'Resets the meeting to "running" – everything can then be edited as usual.',
+      btn_reopen: "Reopen",
+      completed_on: " on {0}",
+      beschlussliste_h1: "Resolutions",
+      label_search: "Search",
+      beschluesse_none: "No resolutions found.",
+      link_jump_to_protocol: "jump to minutes",
+      label_pdf_format: "PDF format",
+      opt_ausfuehrlich: "Detailed",
+      opt_tabelle: "Table (compact)",
+      btn_export_pdf: "Export as PDF",
+      aufgaben_h1: "Tasks",
+      teams_h2: "Teams",
+      label_locked_suffix: "(locked)",
+      label_sort_by: "Sort by",
+      opt_sort_termin: "Due date", opt_sort_team: "Team", opt_sort_status: "Status",
+      opt_sort_verantwortlich: "Person responsible",
+      label_due_until_optional: "Due by (optional)",
+      label_hide_done: "hide completed",
+      btn_apply: "Apply",
+      aufgaben_none: "No tasks found.",
+      placeholder_add_comment: "Add comment...",
+      link_jump_to_protocol_agenda: "jump to minutes/agenda",
+      label_orientation: "Orientation",
+      opt_portrait: "Portrait", opt_landscape: "Landscape",
+      daten_h1: "Backup",
+      backup_h2: "Back up",
+      backup_desc: "Saves all teams, agendas and meetings of this device into a single file. Password-protected teams stay encrypted – the destination device still needs the same password to unlock them.",
+      btn_backup_file: "Save as file",
+      restore_h2: "Restore",
+      restore_desc: "Loads a previously saved file (e.g. on another device, or to restore a backup). Existing teams are not overwritten; for agendas/meetings the newer version wins.",
+      btn_load_file: "Load file",
+      toast_select_file_first: "Please select a file first.",
+      toast_invalid_json: "File is not valid JSON.",
+      toast_import_done: "Import done: {0} new, {1} updated, {2} skipped.",
+      toast_import_failed: "Import failed: {0}",
+      toast_export_done: "File is being downloaded / offered for sharing.",
+      err_unknown_format: "Unknown file format",
+      pdf_agenda_title: "Agenda: {0}",
+      pdf_date_label: "Date: {0}",
+      pdf_not_public_suffix: " (not public)",
+      pdf_see_attachment: "See attachment {0} ({1}).",
+      pdf_attachment_label_n: "Attachment {0}: {1}",
+      pdf_protocol_title: "Minutes: {0}",
+      pdf_full_version: " · complete version",
+      pdf_public_version: " · public version",
+      pdf_antrag_label: "Motion:",
+      pdf_beschluss_label: "Resolution:",
+      pdf_ergebnis_line: "Outcome: {0} (For {1}, Against {2}, Abstention {3})",
+      pdf_aufgabe_label: "Task:",
+      pdf_aufgabe_line: "Responsible: {0} · Due date: {1} · Status: {2}",
+      pdf_beschlussliste_title: "Resolutions",
+      pdf_aufgabenliste_title: "Tasks",
+      pdf_col_date: "Date", pdf_col_top: "Item", pdf_col_antrag: "Motion", pdf_col_beschluss: "Resolution",
+      pdf_col_ergebnis: "Outcome", pdf_col_team: "Team", pdf_col_aufgabe: "Task",
+      pdf_col_verantwortlich: "Responsible", pdf_col_termin: "Due date", pdf_col_status: "Status",
+      pdf_insert_failed: "{0} – could not be inserted.",
+      pdf_filename_agenda: "Agenda_{0}.pdf",
+      pdf_filename_protocol: "Minutes_{0}{1}.pdf",
+      pdf_filename_public_suffix: "_public",
+      pdf_filename_no_date: "no-date",
+      pdf_filename_beschlussliste: "Resolutions.pdf",
+      pdf_filename_aufgabenliste: "Tasks.pdf",
+      img_load_error: "Image could not be read.",
+      err_xml_not_found: "{0} not found in the file (not a valid or supported file?).",
+      err_docx_no_body: "word/document.xml has no text body.",
+      err_odt_no_body: "content.xml has no text body.",
+      err_no_sheets: "No worksheets found in the file.",
+      err_unsupported_fileformat: "Unsupported file format (only .docx, .odt, .pdf, .xlsx).",
+      seg_default_title: "General / Introduction",
+      import_start_h1: "Import old minutes",
+      import_start_desc: "Supported: Word (.docx), OpenDocument text (.odt), PDF, Excel (.xlsx). The file is only read in this browser, nothing gets uploaded. After reading, a preview follows for checking and correcting – detected resolutions in particular can be individually confirmed, edited or discarded there before anything is saved.",
+      label_file: "File",
+      label_meeting_title: "Meeting title",
+      placeholder_import_title: "e.g. Management team minutes",
+      btn_read_file: "Read file",
+      status_reading_file: "Reading file…",
+      status_no_usable_text: "No usable text was found in the file.",
+      status_read_error: "Error while reading: {0}",
+      import_review_title: "Preview: import from “{0}”",
+      import_review_hint: "Everything below can still be edited. After saving, the meeting is \"completed\" (like a normal protocol) and can be edited again at any time via \"Reopen minutes\" – e.g. to add a resolution that was missed.",
+      label_use_as_beschluss: "use as resolution",
+      tag_uncertain: "uncertain – please check",
+      label_use_as_aufgabe: "use as task",
+      label_keep_item: "keep this agenda item",
+      label_full_text: "Full text (will be kept as a text block)",
+      heading_detected_beschluesse: "Detected resolutions",
+      heading_detected_aufgaben: "Detected tasks",
+      btn_import_commit: "Finish import and save",
+      btn_cancel: "Cancel",
+      toast_need_one_item: "At least one agenda item must be kept.",
+      help_tab_bedienung: "Usage",
+      help_tab_installation: "Installation",
+      help_tab_datenschutz: "Privacy & Liability",
+      help_tab_ueber: "About this app",
+      help_html_bedienung: `
+        <h3>Teams</h3>
+        <p>Each team stores its data separately, only on this device. Can optionally be protected with a password – at the top right you can switch teams or sign out.</p>
+        <h3>Agendas &amp; Meetings</h3>
+        <p>An agenda is a template with agenda items (title always required, date optional – for scheduling). "Start meeting" turns it into a running meeting – the agenda itself stays unchanged as a template and afterwards appears under "Old agendas".</p>
+        <p>Agenda items can be promoted/demoted one level with ← / →, and in running meetings also reordered with ↑ / ↓. Within an item: text blocks (with "-" or "1., 2., ..." for lists, nesting allowed), motions/resolutions with a voting outcome, and tasks with a person responsible and a due date.</p>
+        <h3>Completing &amp; reopening</h3>
+        <p>"Complete meeting" locks the minutes against accidental editing. For later corrections, "Reopen minutes" makes it editable again.</p>
+        <h3>Resolutions &amp; Tasks</h3>
+        <p>The resolutions list shows all motions/resolutions of the current team. The tasks list shows tasks across teams (across all unlocked teams) with filters, status/due date directly editable, and PDF export (portrait/landscape selectable).</p>
+        <h3>Language</h3>
+        <p>At the top right you can switch the interface between German and English (DE/EN button). The setting is stored on this device. Text you have already entered is not translated.</p>
+      `,
+      help_html_installation: `<p>This app can be installed like a regular app:</p>
+      <p><strong>iPad/iPhone:</strong> Open the page in Safari → Share □↑ → "Add to Home Screen" → Add.</p>
+      <p><strong>Mac:</strong> Safari → File → "Add to Dock" (from macOS Sonoma), or a bookmark.</p>
+      <p><strong>Android:</strong> Open in Chrome → ⋮ → "Install app".</p>
+      <p><strong>Windows:</strong> Edge/Chrome → install icon in the address bar.</p>
+      <p class="muted small">After an update, a green bar "New version ready" appears at the top – tap it to apply.</p>`,
+      help_html_datenschutz: `
+      <p>All entries (teams, agendas, meetings, resolutions, tasks) stay exclusively on this device, in this browser's storage – there is no server that sees this data. The page is hosted on GitHub, which processes technical data (e.g. IP address) when the page is accessed.</p>
+      <p>Password-protected teams are stored encrypted in the browser with a key derived from the password (PBKDF2 + AES-GCM). The password itself is never stored anywhere.</p>
+      <p>There is no automatic synchronization between devices. "Backup" lets you deliberately export/import the data as a file.</p>
+      <p>This app is provided without warranty; no liability is assumed for data loss (e.g. from clearing the browser storage) – regular backups are recommended.</p>
+    `,
+      help_html_ueber: `<p>Private, free app without advertising. Contact and feedback: github.com/app-laden.</p><p class="muted small">Version ${SV.VERSION}</p>`,
+    },
+  },
+};
+SV.t = SV.i18n.t;
+
+SV.views = {};
+SV.actions = {};
+/* ===================== util ===================== */
+SV.util = {
+  uuid(){
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{
+      const r = Math.random()*16|0, v = c==="x"?r:(r&0x3|0x8); return v.toString(16);
+    });
+  },
+  nowIso(){ return new Date().toISOString(); },
+  todayIso(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); },
+  dmy(iso){
+    if(!iso) return "";
+    const p = iso.split("-"); if(p.length!==3) return iso;
+    return p[2]+"."+p[1]+"."+p[0];
+  },
+  esc(s){
+    s = (s===undefined||s===null) ? "" : String(s);
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  },
+  nl2br(s){ return SV.util.esc(s).replace(/\n/g,"<br>"); },
+  qs(sel, root){ return (root||document).querySelector(sel); },
+  qsa(sel, root){ return Array.from((root||document).querySelectorAll(sel)); },
+  byId(id){ return document.getElementById(id); },
+  debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; },
+  autoGrow(ta){
+    if(!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = (ta.scrollHeight + 2) + "px";
+  },
+  installAutoGrow(root){
+    SV.util.qsa("textarea", root||document).forEach(ta=>{
+      SV.util.autoGrow(ta);
+      ta.oninput = ()=>SV.util.autoGrow(ta);
+    });
+  },
+  downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  },
+  b64FromBytes(bytes){
+    let bin = ""; const arr = new Uint8Array(bytes);
+    for(let i=0;i<arr.length;i++) bin += String.fromCharCode(arr[i]);
+    return btoa(bin);
+  },
+  bytesFromB64(b64){
+    const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  },
+};
+
+/* ===================== crypto (Teampasswort) ===================== */
+SV.crypto2 = {
+  async deriveKey(password, saltBytes){
+    const enc = new TextEncoder();
+    const baseKey = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name:"PBKDF2", salt:saltBytes, iterations:150000, hash:"SHA-256" },
+      baseKey, { name:"AES-GCM", length:256 }, false, ["encrypt","decrypt"]
+    );
+  },
+  randomSalt(){ return crypto.getRandomValues(new Uint8Array(16)); },
+  async encryptJSON(key, obj){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder();
+    const data = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, enc.encode(JSON.stringify(obj)));
+    return { iv: SV.util.b64FromBytes(iv), data: SV.util.b64FromBytes(data) };
+  },
+  async decryptJSON(key, blob){
+    const iv = SV.util.bytesFromB64(blob.iv);
+    const data = SV.util.bytesFromB64(blob.data);
+    const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, data);
+    return JSON.parse(new TextDecoder().decode(dec));
+  },
+  // Byte-Varianten (fuer Anhang-Dateien: Bild/PDF-Rohdaten statt JSON).
+  async encryptBytes(key, bytes){
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const data = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, bytes);
+    return { iv: SV.util.b64FromBytes(iv), data: SV.util.b64FromBytes(data) };
+  },
+  async decryptBytes(key, blob){
+    const iv = SV.util.bytesFromB64(blob.iv);
+    const data = SV.util.bytesFromB64(blob.data);
+    const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, data);
+    return new Uint8Array(dec);
+  },
+};
+
+/* ===================== IndexedDB low level ===================== */
+SV.idb = {
+  _db: null,
+  open(){
+    if(SV.idb._db) return Promise.resolve(SV.idb._db);
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open("mdb-db", 2);
+      req.onupgradeneeded = (ev)=>{
+        const db = ev.target.result;
+        if(!db.objectStoreNames.contains("teams")){
+          db.createObjectStore("teams", {keyPath:"id"});
+        }
+        if(!db.objectStoreNames.contains("agendas")){
+          const s = db.createObjectStore("agendas", {keyPath:"id"});
+          s.createIndex("teamId", "teamId", {unique:false});
+        }
+        if(!db.objectStoreNames.contains("meetings")){
+          const s = db.createObjectStore("meetings", {keyPath:"id"});
+          s.createIndex("teamId", "teamId", {unique:false});
+        }
+        if(!db.objectStoreNames.contains("attachments")){
+          // Anhang-Rohdaten (Bild/PDF-Bytes) getrennt von den Agenda-/Meeting-
+          // Datensaetzen, damit diese nicht durch grosse Dateien aufgebläht
+          // werden. scopeId = "agenda-"+TOP-Id bzw. "meeting-"+TOP-Id, so laesst
+          // sich beim Loeschen/Duplizieren eines TOPs gezielt darueber iterieren.
+          const s = db.createObjectStore("attachments", {keyPath:"id"});
+          s.createIndex("scopeId", "scopeId", {unique:false});
+        }
+      };
+      req.onsuccess = ()=>{ SV.idb._db = req.result; resolve(req.result); };
+      req.onerror = ()=>reject(req.error);
+    });
+  },
+  async tx(storeNames, mode){
+    const db = await SV.idb.open();
+    return db.transaction(storeNames, mode);
+  },
+  put(storeName, obj){
+    return SV.idb.open().then(db=>new Promise((resolve, reject)=>{
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).put(obj);
+      tx.oncomplete = ()=>resolve(obj);
+      tx.onerror = ()=>reject(tx.error);
+    }));
+  },
+  get(storeName, id){
+    return SV.idb.open().then(db=>new Promise((resolve, reject)=>{
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).get(id);
+      req.onsuccess = ()=>resolve(req.result || null);
+      req.onerror = ()=>reject(req.error);
+    }));
+  },
+  getAll(storeName){
+    return SV.idb.open().then(db=>new Promise((resolve, reject)=>{
+      const tx = db.transaction(storeName, "readonly");
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = ()=>resolve(req.result || []);
+      req.onerror = ()=>reject(req.error);
+    }));
+  },
+  getAllByIndex(storeName, indexName, value){
+    return SV.idb.open().then(db=>new Promise((resolve, reject)=>{
+      const tx = db.transaction(storeName, "readonly");
+      const idx = tx.objectStore(storeName).index(indexName);
+      const req = idx.getAll(value);
+      req.onsuccess = ()=>resolve(req.result || []);
+      req.onerror = ()=>reject(req.error);
+    }));
+  },
+  delete(storeName, id){
+    return SV.idb.open().then(db=>new Promise((resolve, reject)=>{
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).delete(id);
+      tx.oncomplete = ()=>resolve();
+      tx.onerror = ()=>reject(tx.error);
+    }));
+  },
+};
+
+/* ===================== Speicherschicht SV.store =====================
+   Abstraktionsschicht: die gesamte UI/Fachlogik ruft NUR diese Funktionen
+   auf, nie IndexedDB direkt. Ein spaeterer Wechsel auf einen gemeinsamen
+   Mehrpersonen-Speicher muesste nur dieses Modul ersetzen.
+   Siehe Meetingdb/vorgehen.md ("Architekturentscheidungen"). */
+SV.store = {
+  unlockedKeys: {}, // teamId -> CryptoKey (nur im Arbeitsspeicher)
+
+  async listTeams(){
+    const teams = await SV.idb.getAll("teams");
+    teams.sort((a,b)=> (a.name||"").localeCompare(b.name||"", "de"));
+    return teams;
+  },
+
+  async createTeam(name, password){
+    const id = SV.util.uuid();
+    const team = { id, name: name.trim(), passwordProtected: !!password, createdAt: SV.util.nowIso() };
+    if(password){
+      const salt = SV.crypto2.randomSalt();
+      const key = await SV.crypto2.deriveKey(password, salt);
+      const verifier = await SV.crypto2.encryptJSON(key, {check:"ok"});
+      team.salt = SV.util.b64FromBytes(salt);
+      team.verifier = verifier;
+      SV.store.unlockedKeys[id] = key;
+    } else {
+      SV.store.unlockedKeys[id] = null; // kein Passwort -> sofort "entsperrt"
+    }
+    await SV.idb.put("teams", team);
+    return team;
+  },
+
+  async deleteTeam(teamId){
+    const agendas = await SV.idb.getAllByIndex("agendas", "teamId", teamId);
+    const meetings = await SV.idb.getAllByIndex("meetings", "teamId", teamId);
+    for(const a of agendas) await SV.idb.delete("agendas", a.id);
+    for(const m of meetings) await SV.idb.delete("meetings", m.id);
+    // Verwaiste Anhang-Rohdaten dieses Teams mit aufraeumen (kein eigener
+    // teamId-Index auf dem attachments-Store noetig - diese Liste ist klein).
+    const allAttachments = await SV.idb.getAll("attachments");
+    for(const at of allAttachments){ if(at.teamId === teamId) await SV.idb.delete("attachments", at.id); }
+    await SV.idb.delete("teams", teamId);
+    delete SV.store.unlockedKeys[teamId];
+  },
+
+  isUnlocked(teamId){ return SV.store.unlockedKeys[teamId] !== undefined; },
+
+  // Versucht ein Team ohne Passwort freizuschalten (nur sinnvoll, wenn
+  // passwordProtected == false); gibt true zurueck.
+  async unlockPlain(teamId){
+    SV.store.unlockedKeys[teamId] = null; // markiert "entsperrt, kein Schluessel noetig"
+    return true;
+  },
+
+  async unlockWithPassword(team, password){
+    const salt = SV.util.bytesFromB64(team.salt);
+    const key = await SV.crypto2.deriveKey(password, salt);
+    try{
+      const check = await SV.crypto2.decryptJSON(key, team.verifier);
+      if(check && check.check === "ok"){
+        SV.store.unlockedKeys[team.id] = key;
+        return true;
+      }
+      return false;
+    }catch(e){
+      return false; // AES-GCM-Tag passt nicht -> falsches Passwort
+    }
+  },
+
+  lock(teamId){ delete SV.store.unlockedKeys[teamId]; },
+
+  _keyFor(teamId){
+    const k = SV.store.unlockedKeys[teamId];
+    return k===undefined ? undefined : k; // undefined = gesperrt, null = kein Passwort
+  },
+
+  async _decryptRecord(storeName, rec){
+    if(rec.plain !== undefined) return rec.plain;
+    const key = SV.store._keyFor(rec.teamId);
+    if(key === undefined) throw new Error("TEAM_LOCKED");
+    return SV.crypto2.decryptJSON(key, rec.enc);
+  },
+
+  async _saveRecord(storeName, teamId, dataObj){
+    dataObj.updatedAt = SV.util.nowIso();
+    const key = SV.store._keyFor(teamId);
+    if(key === undefined) throw new Error("TEAM_LOCKED");
+    const rec = { id: dataObj.id, teamId, updatedAt: dataObj.updatedAt };
+    if(key){ rec.enc = await SV.crypto2.encryptJSON(key, dataObj); }
+    else { rec.plain = dataObj; }
+    await SV.idb.put(storeName, rec);
+    return dataObj;
+  },
+
+  async listAgendas(teamId){
+    const recs = await SV.idb.getAllByIndex("agendas", "teamId", teamId);
+    const out = [];
+    for(const r of recs) out.push(await SV.store._decryptRecord("agendas", r));
+    return out;
+  },
+  async getAgenda(teamId, id){
+    const r = await SV.idb.get("agendas", id);
+    if(!r || r.teamId !== teamId) return null;
+    return SV.store._decryptRecord("agendas", r);
+  },
+  saveAgenda(teamId, agenda){ return SV.store._saveRecord("agendas", teamId, agenda); },
+  deleteAgenda(id){ return SV.idb.delete("agendas", id); },
+
+  async listMeetings(teamId){
+    const recs = await SV.idb.getAllByIndex("meetings", "teamId", teamId);
+    const out = [];
+    for(const r of recs) out.push(await SV.store._decryptRecord("meetings", r));
+    return out;
+  },
+  async getMeeting(teamId, id){
+    const r = await SV.idb.get("meetings", id);
+    if(!r || r.teamId !== teamId) return null;
+    return SV.store._decryptRecord("meetings", r);
+  },
+  saveMeeting(teamId, meeting){ return SV.store._saveRecord("meetings", teamId, meeting); },
+  deleteMeeting(id){ return SV.idb.delete("meetings", id); },
+
+  // ---------- Anhang-Dateien (Rohdaten getrennt vom Agenda-/Meeting-Datensatz) ----------
+  // scopeId = "agenda-"+TOP-Id bzw. "meeting-"+TOP-Id. Die Metadaten (Dateiname,
+  // Anzeigeart, Bildunterschrift) liegen im anhaenge-Array des TOPs selbst (wie
+  // blocks/aufgaben/antraege); hier liegen nur die Bytes, verschluesselt wie
+  // der Rest des Teams, falls passwortgeschuetzt.
+  async saveAttachmentFile(teamId, scopeId, attachmentId, file){
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const key = SV.store._keyFor(teamId);
+    if(key === undefined) throw new Error("TEAM_LOCKED");
+    const rec = { id: attachmentId, scopeId, teamId, mime: file.type||"", size: bytes.length };
+    if(key){ rec.enc = await SV.crypto2.encryptBytes(key, bytes); }
+    else { rec.plain = SV.util.b64FromBytes(bytes); }
+    await SV.idb.put("attachments", rec);
+    return rec;
+  },
+  async getAttachmentBlob(teamId, attachmentId, mimeHint){
+    const rec = await SV.idb.get("attachments", attachmentId);
+    if(!rec) return null;
+    let bytes;
+    if(rec.plain !== undefined){ bytes = SV.util.bytesFromB64(rec.plain); }
+    else {
+      const key = SV.store._keyFor(teamId);
+      if(key === undefined) throw new Error("TEAM_LOCKED");
+      bytes = await SV.crypto2.decryptBytes(key, rec.enc);
+    }
+    return new Blob([bytes], {type: rec.mime || mimeHint || "application/octet-stream"});
+  },
+  deleteAttachmentFile(attachmentId){ return SV.idb.delete("attachments", attachmentId); },
+  // Kopiert die Bytes eines Anhangs unter neuer Id/neuem Scope (z.B. beim
+  // Sitzungsstart: Agenda-Anhaenge werden fuer die Sitzung physisch dupliziert,
+  // damit die Agenda-Vorlage unveraendert bleibt - wie im Python-Original).
+  async duplicateAttachmentFile(oldAttachmentId, newAttachmentId, newScopeId){
+    const rec = await SV.idb.get("attachments", oldAttachmentId);
+    if(!rec) return null;
+    const copy = Object.assign({}, rec, { id:newAttachmentId, scopeId:newScopeId });
+    await SV.idb.put("attachments", copy);
+    return copy;
+  },
+  async deleteAttachmentsByScope(scopeId){
+    const recs = await SV.idb.getAllByIndex("attachments", "scopeId", scopeId);
+    for(const r of recs) await SV.idb.delete("attachments", r.id);
+  },
+
+  // Rohdaten fuer Export (bleiben verschluesselt, falls Team geschuetzt)
+  async exportAll(){
+    const teams = await SV.idb.getAll("teams");
+    const agendas = await SV.idb.getAll("agendas");
+    const meetings = await SV.idb.getAll("meetings");
+    const attachments = await SV.idb.getAll("attachments");
+    return { format:"meetingdb-export", version:1, exportedAt: SV.util.nowIso(), teams, agendas, meetings, attachments };
+  },
+
+  async importAll(dump){
+    if(!dump || (dump.format !== "meetingdb-export" && dump.format !== "sitzungsverwaltung-export")) throw new Error(SV.i18n.t("err_unknown_format"));
+    const existingTeams = await SV.idb.getAll("teams");
+    const existingAgendas = await SV.idb.getAll("agendas");
+    const existingMeetings = await SV.idb.getAll("meetings");
+    const existingAttachments = await SV.idb.getAll("attachments");
+    const byId = (arr)=>{ const m={}; arr.forEach(x=>m[x.id]=x); return m; };
+    const teamMap = byId(existingTeams), agendaMap = byId(existingAgendas), meetingMap = byId(existingMeetings);
+    const attachmentMap = byId(existingAttachments);
+    let added=0, updated=0, skipped=0;
+    for(const t of (dump.teams||[])){
+      if(!teamMap[t.id]){ await SV.idb.put("teams", t); added++; }
+      else skipped++; // bestehendes Team nicht ueberschreiben (Passwort/Salt bleibt unberuehrt)
+    }
+    for(const a of (dump.agendas||[])){
+      const ex = agendaMap[a.id];
+      if(!ex){ await SV.idb.put("agendas", a); added++; }
+      else if(!ex.updatedAt || (a.updatedAt && a.updatedAt > ex.updatedAt)){ await SV.idb.put("agendas", a); updated++; }
+      else skipped++;
+    }
+    for(const m of (dump.meetings||[])){
+      const ex = meetingMap[m.id];
+      if(!ex){ await SV.idb.put("meetings", m); added++; }
+      else if(!ex.updatedAt || (m.updatedAt && m.updatedAt > ex.updatedAt)){ await SV.idb.put("meetings", m); updated++; }
+      else skipped++;
+    }
+    // Anhang-Dateien haben kein eigenes updatedAt (Bytes aendern sich nach dem
+    // Anlegen nicht) - unbekannte Id einfach uebernehmen, bekannte Id ueberspringen.
+    for(const at of (dump.attachments||[])){
+      if(!attachmentMap[at.id]){ await SV.idb.put("attachments", at); added++; }
+      else skipped++;
+    }
+    return {added, updated, skipped};
+  },
+};
+
+/* ===================== Textformatierung (Port von core/textformat.py) =====================
+   Erkennt "-"/"1., 2., ..."-Aufzaehlungen in Textbloecken. Tiefe wird RELATIV
+   zur jeweils letzten gesehenen Listenzeile berechnet (Stack), nicht anhand
+   einer festen Leerzeichenzahl - siehe Runde 10/11/13-Nachtraege im
+   Python-Original. Eine mit ":" endende Ueberschriftzeile, der direkt
+   (ohne Leerzeile) eine nicht eingerueckte Liste folgt, stuft diese
+   automatisch eine Ebene tiefer ein. */
+SV.textformat = {
+  LIST_RE: /^(\s*)(?:-\s+(.*)|(\d+)[.)]\s+(.*))$/,
+
+  cleanBlockContent(raw){
+    raw = raw || "";
+    let lines = raw.split("\n");
+    while(lines.length && lines[0].trim()==="") lines.shift();
+    while(lines.length && lines[lines.length-1].trim()==="") lines.pop();
+    return lines.join("\n");
+  },
+
+  indentLen(ws){
+    let n = 0;
+    for(const ch of ws) n += (ch === "\t" ? 2 : 1);
+    return n;
+  },
+
+  parseBlockSegments(content){
+    const rawLines = (content||"").split("\n");
+    const segments = [];
+    let textBuf = [];
+    let stack = [];
+    let colonOffset = 0;
+    let inListRun = false;
+    let prevLineType = null; // 'blank' | 'text' | 'list'
+    let prevTextEndsColon = false;
+    let lastListDepth = null;
+    let curListSeg = null;
+
+    const flushText = ()=>{
+      if(textBuf.length){
+        segments.push({type:"text", text: textBuf.join("\n")});
+      }
+      textBuf = [];
+    };
+
+    for(const line of rawLines){
+      if(line.trim()===""){
+        stack = []; colonOffset = 0; inListRun = false; curListSeg = null; lastListDepth = null;
+        textBuf.push(line);
+        prevLineType = "blank";
+        continue;
+      }
+      const m = line.match(SV.textformat.LIST_RE);
+      if(m){
+        const leadWs = m[1] || "";
+        const itemText = (m[2] !== undefined ? m[2] : m[4]) || "";
+        if(!inListRun){
+          colonOffset = (prevLineType === "text" && prevTextEndsColon) ? 1 : 0;
+          stack = [];
+          inListRun = true;
+          lastListDepth = null;
+          flushText();
+        }
+        const indentLen = SV.textformat.indentLen(leadWs);
+        while(stack.length && stack[stack.length-1].indent > indentLen) stack.pop();
+        let depth;
+        if(stack.length && stack[stack.length-1].indent === indentLen){
+          depth = stack[stack.length-1].depth;
+        } else {
+          depth = stack.length ? stack[stack.length-1].depth + 1 : 0;
+          stack.push({indent: indentLen, depth});
+        }
+        const finalDepth = depth + colonOffset;
+        if(curListSeg && lastListDepth === finalDepth){
+          curListSeg.items.push(itemText);
+        } else {
+          curListSeg = {type:"list", depth: finalDepth, items:[itemText]};
+          segments.push(curListSeg);
+        }
+        lastListDepth = finalDepth;
+        prevLineType = "list";
+      } else {
+        if(inListRun){ stack=[]; colonOffset=0; inListRun=false; curListSeg=null; lastListDepth=null; }
+        textBuf.push(line);
+        prevLineType = "text";
+        prevTextEndsColon = line.trim().endsWith(":");
+      }
+    }
+    flushText();
+    return segments;
+  },
+
+  // HTML-Rendering fuer die Protokoll-Ansicht (entspricht meeting_view.html / _macros.html::segments)
+  renderSegmentsHtml(content){
+    const segs = SV.textformat.parseBlockSegments(content);
+    let html = "";
+    for(const seg of segs){
+      if(seg.type === "text"){
+        const t = seg.text.replace(/^\n+|\n+$/g, "");
+        if(t.trim()==="") continue;
+        html += `<p style="margin:4px 0; white-space:pre-wrap;">${SV.util.esc(t)}</p>`;
+      } else {
+        if(seg.depth === 0){
+          html += `<ul class="block-bullets">`;
+          for(const it of seg.items) html += `<li>${SV.util.esc(it)}</li>`;
+          html += `</ul>`;
+        } else {
+          const margin = 40 + (seg.depth-1)*20;
+          html += `<ul class="block-sublist" style="margin-left:${margin}px;">`;
+          for(const it of seg.items) html += `<li>– ${SV.util.esc(it)}</li>`;
+          html += `</ul>`;
+        }
+      }
+    }
+    return html || "";
+  },
+};
+
+/* ===================== Datenmodell (Port von core/models.py) ===================== */
+SV.model = {
+  // Unterstuetzte Dateitypen fuer Anhaenge, erkannt an der Dateiendung (nicht
+  // am gemeldeten MIME-Typ - wie im Python-Original, da Browser/Geraete beim
+  // Teilen/Hochladen uneinheitliche MIME-Typen liefern). "bild" wird in der
+  // PDF-Ausgabe eingebettet, "pdf" wird als echte Zusatzseiten angehaengt.
+  ATTACHMENT_EXTENSIONS: {
+    jpg:"bild", jpeg:"bild", png:"bild", gif:"bild", webp:"bild", heic:"bild", heif:"bild",
+    pdf:"pdf",
+  },
+  attachmentKind(filename){
+    const m = /\.([a-z0-9]+)$/i.exec((filename||"").trim());
+    const ext = m ? m[1].toLowerCase() : "";
+    return SV.model.ATTACHMENT_EXTENSIONS[ext] || null; // null = nicht unterstuetzter Typ
+  },
+  newAttachment(filename, display, caption){
+    return {
+      id: SV.util.uuid(), filename: filename||"", kind: SV.model.attachmentKind(filename),
+      display: display==="verborgen" ? "verborgen" : "anhang", // "anhang" = im Anhang sichtbar, "verborgen" = nicht im Protokoll
+      caption: caption||"", showFilename: false, created_at: SV.util.nowIso(),
+    };
+  },
+  newBlock(content){
+    return { id: SV.util.uuid(), type:"text", content: SV.textformat.cleanBlockContent(content), created_at: SV.util.nowIso() };
+  },
+  newTask(text, verantwortlich, termin){
+    return { id: SV.util.uuid(), text: SV.textformat.cleanBlockContent(text||""), verantwortlich: verantwortlich||"",
+      termin: termin||"", status:"neu", kommentare: [], created_at: SV.util.nowIso() };
+  },
+  newComment(text){
+    return { id: SV.util.uuid(), text: text||"", created_at: SV.util.nowIso() };
+  },
+  newAntrag(data){
+    return {
+      id: SV.util.uuid(),
+      antrag_text: SV.textformat.cleanBlockContent(data.antrag_text||""),
+      beschluss_text: SV.textformat.cleanBlockContent(data.beschluss_text||""),
+      ergebnis: data.ergebnis||"offen",
+      dafuer: data.dafuer||0, dagegen: data.dagegen||0, enthaltung: data.enthaltung||0,
+      created_at: SV.util.nowIso(),
+    };
+  },
+  newAgendaItem(title, opts){
+    opts = opts || {};
+    return {
+      id: SV.util.uuid(), title: title||"", parent_id: opts.parent_id||null, order: opts.order||0,
+      public: opts.public !== undefined ? opts.public : true,
+      blocks: [], geloeschte_blocks: [], aufgaben: [], geloeschte_aufgaben: [],
+      anhaenge: [], geloeschte_anhaenge: [],
+    };
+  },
+  newAgenda(title, date){
+    return { id: SV.util.uuid(), title: title||"", date: date||"", items: [], geloeschte_items: [], created_at: SV.util.nowIso() };
+  },
+  newMeetingItem(title, opts){
+    opts = opts || {};
+    return {
+      id: SV.util.uuid(), title: title||"", parent_id: opts.parent_id||null, order: opts.order||0,
+      public: opts.public !== undefined ? opts.public : true, status:"normal",
+      blocks: [], geloeschte_blocks: [], antraege: [], geloeschte_antraege: [],
+      aufgaben: [], geloeschte_aufgaben: [],
+      anhaenge: [], geloeschte_anhaenge: [],
+    };
+  },
+  newMeeting(date, title, agenda_id){
+    return {
+      id: SV.util.uuid(), date: date||"", title: title||"", agenda_id: agenda_id||null,
+      status:"laufend", items: [], geloeschte_items: [], intro_note:"",
+      created_at: SV.util.nowIso(), completed_at: null,
+    };
+  },
+  async meetingItemFromAgendaItem(ai, idMap){
+    const mi = SV.model.newMeetingItem(ai.title, {parent_id: ai.parent_id, order: ai.order, public: ai.public});
+    idMap[ai.id] = mi.id;
+    (ai.blocks||[]).forEach(b=> mi.blocks.push(Object.assign({}, b, {id: SV.util.uuid()})));
+    (ai.aufgaben||[]).forEach(t=> mi.aufgaben.push(Object.assign({}, t, {id: SV.util.uuid()})));
+    // Anhaenge physisch duplizieren (neue Id, neuer Scope "meeting-"+mi.id) -
+    // die Agenda bleibt als wiederverwendbare Vorlage unveraendert, genau wie
+    // im Python-Original ("Agenda bleibt unveraendert").
+    for(const at of (ai.anhaenge||[])){
+      const newId = SV.util.uuid();
+      await SV.store.duplicateAttachmentFile(at.id, newId, "meeting-"+mi.id);
+      mi.anhaenge.push(Object.assign({}, at, {id:newId}));
+    }
+    return mi;
+  },
+  // Baut Meeting-Items aus Agenda-Items (zweistufig: erst Haupt-TOPs, dann
+  // Unterpunkte mit remapptem parent_id - analog zum Python-Original).
+  async buildMeetingItemsFromAgenda(agendaItems){
+    const idMap = {};
+    const mains = agendaItems.filter(it=>!it.parent_id);
+    const subs = agendaItems.filter(it=>it.parent_id);
+    const out = [];
+    for(const it of mains) out.push(await SV.model.meetingItemFromAgendaItem(it, idMap));
+    for(const it of subs){
+      const mi = await SV.model.meetingItemFromAgendaItem(it, idMap);
+      mi.parent_id = idMap[it.parent_id] || null;
+      out.push(mi);
+    }
+    return out;
+  },
+  // Nummerierung ("1", "2.1", ...) inkl. Sicherheitsnetz fuer Unterpunkte
+  // mit nicht mehr existierender parent_id.
+  numberedItems(items){
+    const byId = {}; items.forEach(it=>byId[it.id]=it);
+    const mains = items.filter(it=> !it.parent_id || !byId[it.parent_id])
+      .sort((a,b)=>a.order-b.order);
+    const out = [];
+    mains.forEach((m,i)=>{
+      out.push({item:m, number: String(i+1), depth:0});
+      const subs = items.filter(it=>it.parent_id===m.id).sort((a,b)=>a.order-b.order);
+      subs.forEach((s,j)=> out.push({item:s, number:`${i+1}.${j+1}`, depth:1}));
+    });
+    return out;
+  },
+  renumberSiblings(items, parentId){
+    items.filter(it=>it.parent_id===parentId).sort((a,b)=>a.order-b.order)
+      .forEach((it,i)=> it.order = i);
+  },
+  newItemFor(kind, title, opts){
+    return kind==="meeting" ? SV.model.newMeetingItem(title, opts) : SV.model.newAgendaItem(title, opts);
+  },
+  // Hoch/Runter- und Ein-/Ausstufen eines TOPs (Port von _indent_item in app.py).
+  indentItem(items, itemId, direction){
+    const it = items.find(x=>x.id===itemId);
+    if(!it) return {ok:false};
+    if(direction === "in"){
+      if(it.parent_id) return {ok:false};
+      const topSiblings = items.filter(x=>!x.parent_id).sort((a,b)=>a.order-b.order);
+      const idx = topSiblings.findIndex(x=>x.id===itemId);
+      if(idx<=0) return {ok:false};
+      const hasChildren = items.some(x=>x.parent_id===it.id);
+      if(hasChildren) return {ok:false, error:SV.t("err_item_has_children")};
+      const newParent = topSiblings[idx-1];
+      it.parent_id = newParent.id;
+      it.order = 9999;
+      SV.model.renumberSiblings(items, newParent.id);
+      return {ok:true};
+    }
+    if(direction === "out"){
+      if(!it.parent_id) return {ok:false};
+      const parentId = it.parent_id;
+      const parent = items.find(x=>x.id===parentId);
+      it.parent_id = null;
+      it.order = (parent ? parent.order : 0) + 0.5;
+      SV.model.renumberSiblings(items, parentId);
+      SV.model.renumberSiblings(items, null);
+      return {ok:true};
+    }
+    return {ok:false};
+  },
+  moveItem(items, itemId, direction){
+    const it = items.find(x=>x.id===itemId);
+    if(!it) return {ok:false};
+    const sibs = items.filter(x=>x.parent_id===it.parent_id).sort((a,b)=>a.order-b.order);
+    const idx = sibs.findIndex(x=>x.id===itemId);
+    const swapIdx = direction==="up" ? idx-1 : idx+1;
+    if(swapIdx<0 || swapIdx>=sibs.length) return {ok:false};
+    const other = sibs[swapIdx];
+    const tmp = it.order; it.order = other.order; other.order = tmp;
+    return {ok:true};
+  },
+};
+
+/* ===================== Generische Mutations-Helfer (Agenda & Meeting) ===================== */
+SV.data = {
+  load(kind, teamId, id){ return kind==="agenda" ? SV.store.getAgenda(teamId,id) : SV.store.getMeeting(teamId,id); },
+  save(kind, teamId, obj){ return kind==="agenda" ? SV.store.saveAgenda(teamId,obj) : SV.store.saveMeeting(teamId,obj); },
+};
+SV.actions._mutate = async function(kind, containerId, fn){
+  const teamId = SV.state.currentTeamId;
+  const obj = await SV.data.load(kind, teamId, containerId);
+  if(!obj) return {error:"nicht gefunden"};
+  const result = fn(obj) || {};
+  await SV.data.save(kind, teamId, obj);
+  return result;
+};
+SV.actions._refresh = function(){ SV.router.go(); };
+
+SV.actions.addItem = async function(kind, containerId, titleElId, publicElId){
+  const title = SV.util.byId(titleElId).value.trim();
+  if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
+  const isPublic = publicElId ? SV.util.byId(publicElId).checked : true;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const topOrders = c.items.filter(x=>!x.parent_id).map(x=>x.order);
+    const order = topOrders.length ? Math.max(...topOrders)+1 : 0;
+    c.items.push(SV.model.newItemFor(kind, title, {order, public:isPublic}));
+  });
+  SV.actions._refresh();
+};
+SV.actions.editItemTitle = async function(kind, containerId, itemId, inputId){
+  const title = SV.util.byId(inputId).value.trim();
+  if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId); if(it) it.title = title;
+  });
+  SV.actions._refresh();
+};
+SV.actions.indentItem = async function(kind, containerId, itemId, direction){
+  const res = await SV.actions._mutate(kind, containerId, (c)=> SV.model.indentItem(c.items, itemId, direction));
+  if(res && res.error) SV.ui.toast(res.error);
+  SV.actions._refresh();
+};
+SV.actions.moveItem = async function(kind, containerId, itemId, direction){
+  await SV.actions._mutate(kind, containerId, (c)=> SV.model.moveItem(c.items, itemId, direction));
+  SV.actions._refresh();
+};
+SV.actions.toggleItemPublic = async function(kind, containerId, itemId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId); if(it) it.public = !it.public;
+  });
+  SV.actions._refresh();
+};
+SV.actions.setItemStatus = async function(containerId, itemId, status){
+  await SV.actions._mutate("meeting", containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId); if(it) it.status = status;
+  });
+  SV.actions._refresh();
+};
+SV.actions.deleteItem = async function(kind, containerId, itemId){
+  if(!await SV.ui.confirm(SV.t("confirm_delete_item"))) return;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const toDelete = c.items.filter(x=>x.id===itemId || x.parent_id===itemId);
+    toDelete.forEach(it=>{
+      it.deleted_at = SV.util.nowIso();
+      c.geloeschte_items.push(it);
+    });
+    c.items = c.items.filter(x=> !toDelete.includes(x));
+  });
+  SV.actions._refresh();
+};
+SV.actions.restoreItem = async function(kind, containerId, itemId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = (c.geloeschte_items||[]).find(x=>x.id===itemId);
+    if(it){ delete it.deleted_at; c.geloeschte_items = c.geloeschte_items.filter(x=>x.id!==itemId); c.items.push(it); }
+  });
+  SV.actions._refresh();
+};
+
+/* --- Textbloecke --- */
+SV.actions.addBlock = async function(kind, containerId, itemId, textareaId){
+  const content = SV.util.byId(textareaId).value;
+  if(!content.trim()) return;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    it.blocks.push(SV.model.newBlock(content));
+  });
+  SV.actions._refresh();
+};
+SV.actions.editBlock = async function(kind, containerId, itemId, blockId, textareaId){
+  const content = SV.util.byId(textareaId).value;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const b = it.blocks.find(x=>x.id===blockId);
+    if(b) b.content = SV.textformat.cleanBlockContent(content);
+  });
+  SV.actions._refresh();
+};
+SV.actions.deleteBlock = async function(kind, containerId, itemId, blockId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const b = it.blocks.find(x=>x.id===blockId);
+    if(b){ b.deleted_at = SV.util.nowIso(); it.geloeschte_blocks.push(b); it.blocks = it.blocks.filter(x=>x.id!==blockId); }
+  });
+  SV.actions._refresh();
+};
+SV.actions.restoreBlock = async function(kind, containerId, itemId, blockId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const b = (it.geloeschte_blocks||[]).find(x=>x.id===blockId);
+    if(b){ delete b.deleted_at; it.geloeschte_blocks = it.geloeschte_blocks.filter(x=>x.id!==blockId); it.blocks.push(b); }
+  });
+  SV.actions._refresh();
+};
+
+/* --- Aufgaben --- */
+SV.actions.addTask = async function(kind, containerId, itemId, textId, verId, terId){
+  const text = SV.util.byId(textId).value.trim();
+  const ver = SV.util.byId(verId).value.trim();
+  const ter = SV.util.byId(terId).value;
+  if(!text || !ver || !ter){ SV.ui.toast(SV.t("toast_task_required")); return; }
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    it.aufgaben.push(SV.model.newTask(text, ver, ter));
+  });
+  SV.actions._refresh();
+};
+SV.actions.deleteTask = async function(kind, containerId, itemId, taskId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const t = it.aufgaben.find(x=>x.id===taskId);
+    if(t){ t.deleted_at = SV.util.nowIso(); it.geloeschte_aufgaben.push(t); it.aufgaben = it.aufgaben.filter(x=>x.id!==taskId); }
+  });
+  SV.actions._refresh();
+};
+SV.actions.restoreTask = async function(kind, containerId, itemId, taskId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const t = (it.geloeschte_aufgaben||[]).find(x=>x.id===taskId);
+    if(t){ delete t.deleted_at; it.geloeschte_aufgaben = it.geloeschte_aufgaben.filter(x=>x.id!==taskId); it.aufgaben.push(t); }
+  });
+  SV.actions._refresh();
+};
+SV.actions.updateTask = async function(kind, containerId, itemId, taskId, status, ver, ter){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const t = it.aufgaben.find(x=>x.id===taskId);
+    if(t){ t.status=status; t.verantwortlich=ver; t.termin=ter; }
+  });
+};
+SV.actions.addTaskComment = async function(kind, containerId, itemId, taskId, textId){
+  const text = SV.util.byId(textId).value.trim();
+  if(!text) return;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const t = it.aufgaben.find(x=>x.id===taskId);
+    if(t){ t.kommentare = t.kommentare||[]; t.kommentare.push(SV.model.newComment(text)); }
+  });
+  SV.actions._refresh();
+};
+
+/* --- Antraege/Beschluesse (nur Meetings) --- */
+SV.actions.addAntrag = async function(containerId, itemId, data){
+  await SV.actions._mutate("meeting", containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    it.antraege.push(SV.model.newAntrag(data));
+  });
+  SV.actions._refresh();
+};
+SV.actions.editAntrag = async function(containerId, itemId, antragId, data){
+  await SV.actions._mutate("meeting", containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const a = it.antraege.find(x=>x.id===antragId);
+    if(a) Object.assign(a, {
+      antrag_text: SV.textformat.cleanBlockContent(data.antrag_text),
+      beschluss_text: SV.textformat.cleanBlockContent(data.beschluss_text),
+      ergebnis: data.ergebnis, dafuer: data.dafuer, dagegen: data.dagegen, enthaltung: data.enthaltung,
+    });
+  });
+  SV.actions._refresh();
+};
+SV.actions.deleteAntrag = async function(containerId, itemId, antragId){
+  await SV.actions._mutate("meeting", containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const a = it.antraege.find(x=>x.id===antragId);
+    if(a){ a.deleted_at = SV.util.nowIso(); it.geloeschte_antraege.push(a); it.antraege = it.antraege.filter(x=>x.id!==antragId); }
+  });
+  SV.actions._refresh();
+};
+SV.actions.restoreAntrag = async function(containerId, itemId, antragId){
+  await SV.actions._mutate("meeting", containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const a = (it.geloeschte_antraege||[]).find(x=>x.id===antragId);
+    if(a){ delete a.deleted_at; it.geloeschte_antraege = it.geloeschte_antraege.filter(x=>x.id!==antragId); it.antraege.push(a); }
+  });
+  SV.actions._refresh();
+};
+
+/* ===================== App-Status, Router, UI-Helfer ===================== */
+SV.state = {
+  teams: [],
+  currentTeamId: null,
+  get currentTeam(){ return SV.state.teams.find(t=>t.id===SV.state.currentTeamId) || null; },
+};
+
+SV.ui = {
+  toastEl: null,
+  toast(msg){
+    let el = SV.ui.toastEl;
+    if(!el){
+      el = document.createElement("div");
+      el.style.cssText = "position:fixed; left:50%; bottom:calc(16px + var(--safe-b)); transform:translateX(-50%); background:#1d2630; color:#fff; padding:10px 16px; border-radius:8px; font-size:.88rem; z-index:999; max-width:88vw; text-align:center; box-shadow:0 4px 16px rgba(0,0,0,.3);";
+      document.body.appendChild(el);
+      SV.ui.toastEl = el;
+    }
+    el.textContent = msg;
+    el.style.display = "block";
+    clearTimeout(SV.ui._toastTimer);
+    SV.ui._toastTimer = setTimeout(()=>{ el.style.display = "none"; }, 3200);
+  },
+  async confirm(msg){ return window.confirm(msg); },
+  async prompt(msg, def){ return window.prompt(msg, def||""); },
+  renderTabs(){
+    const tabs = [
+      {hash:"#/agendas", labelKey:"nav_agendas"},
+      {hash:"#/meetings", labelKey:"nav_meetings"},
+      {hash:"#/beschluesse", labelKey:"nav_beschluesse"},
+      {hash:"#/aufgaben", labelKey:"nav_aufgaben"},
+      {hash:"#/daten", labelKey:"nav_daten"},
+    ];
+    const nav = SV.util.byId("tabs");
+    const cur = location.hash.split("?")[0] || "#/agendas";
+    const hasTeam = !!SV.state.currentTeamId;
+    nav.innerHTML = tabs.map(t=>
+      `<button ${(!hasTeam && t.hash!=="#/daten")?"disabled":""} class="${cur===t.hash?"active":""}" onclick="location.hash='${t.hash}'">${SV.t(t.labelKey)}</button>`
+    ).join("") + `<button class="${cur==="#/teams"?"active":""}" onclick="location.hash='#/teams'">${SV.t("nav_teams")}</button>`;
+    const pill = SV.util.byId("teamPill");
+    pill.textContent = SV.state.currentTeam ? ("👥 " + SV.state.currentTeam.name) : SV.t("team_pill_none");
+    pill.title = SV.t("team_pill_title");
+  },
+};
+
+SV.router = {
+  routes: {},
+  on(pattern, handler){ SV.router.routes[pattern] = handler; },
+  async go(){
+    const hash = (location.hash || "#/teams").replace(/^#/, "");
+    const [path, qs] = hash.split("?");
+    const query = {};
+    if(qs) qs.split("&").forEach(p=>{ const [k,v]=p.split("="); if(k) query[decodeURIComponent(k)] = decodeURIComponent(v||""); });
+    const parts = path.split("/").filter(Boolean);
+    if(!SV.state.teams.length && SV.state.currentTeamId){
+      try{ SV.state.teams = await SV.store.listTeams(); }catch(e){}
+    }
+    SV.ui.renderTabs();
+    const app = SV.util.byId("app");
+    try{
+      if(parts[0] === "teams" || parts.length===0){
+        await SV.views.teams(app, query);
+      } else if(parts[0]==="daten"){
+        await SV.views.daten(app, query);
+      } else if(!SV.state.currentTeamId){
+        location.hash = "#/teams";
+      } else if(parts[0]==="agendas" && parts.length===1){
+        await SV.views.agendaList(app, query);
+      } else if(parts[0]==="agendas" && parts[1]){
+        await SV.views.agendaEdit(app, parts[1]);
+      } else if(parts[0]==="meetings" && parts.length===1){
+        await SV.views.meetingList(app, query);
+      } else if(parts[0]==="meetings" && parts[1]){
+        await SV.views.meetingRun(app, parts[1]);
+      } else if(parts[0]==="beschluesse"){
+        await SV.views.beschlussListView(app, query);
+      } else if(parts[0]==="aufgaben"){
+        await SV.views.aufgabenListView(app, query);
+      } else if(parts[0]==="import" && parts[1]==="review"){
+        await SV.views.importReview(app);
+      } else if(parts[0]==="import"){
+        await SV.views.importStart(app);
+      } else {
+        app.innerHTML = `<div class="card">${SV.t("err_page_not_found")}</div>`;
+      }
+      if(SV.state.scrollTarget){
+        const el = document.getElementById(SV.state.scrollTarget);
+        if(el) setTimeout(()=>el.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+        SV.state.scrollTarget = null;
+      }
+    }catch(e){
+      if(e && e.message === "TEAM_LOCKED"){
+        app.innerHTML = `<div class="card"><h2>${SV.t("team_locked_title")}</h2><p>${SV.t("team_locked_body")}</p><button onclick="location.hash='#/teams'">${SV.t("to_teams")}</button></div>`;
+        return;
+      }
+      console.error(e);
+      app.innerHTML = `<div class="card"><h2>${SV.t("generic_error_title")}</h2><p class="muted small">${SV.util.esc(e.message||String(e))}</p></div>`;
+    }
+  },
+};
+window.addEventListener("hashchange", SV.router.go);
+
+/* ===================== Views ===================== */
+SV.views.teams = async function(app){
+  SV.state.teams = await SV.store.listTeams();
+  const rows = SV.state.teams.map(t=>{
+    const unlocked = SV.store.isUnlocked(t.id);
+    const locked = t.passwordProtected && !unlocked;
+    return `<div class="list-item">
+      <strong>${SV.util.esc(t.name)}</strong>
+      ${t.passwordProtected ? `<span class="lock-icon">🔒</span>` : ``}
+      ${SV.state.currentTeamId===t.id ? `<span class="tag done">${SV.t("tag_active")}</span>` : ``}
+      ${locked ? `
+        <div class="row" style="margin-top:8px;">
+          <div><label>${SV.t("label_password")}</label><input type="password" id="pw-${t.id}" onkeydown="if(event.key==='Enter')SV.actions.unlockTeam('${t.id}')"></div>
+          <div style="flex:0;"><button onclick="SV.actions.unlockTeam('${t.id}')">${SV.t("btn_unlock")}</button></div>
+        </div>` : `
+        <div class="actions">
+          <button onclick="SV.actions.selectTeam('${t.id}')">${SV.t("btn_select")}</button>
+          <button class="danger" onclick="SV.actions.deleteTeam('${t.id}')">${SV.t("btn_delete")}</button>
+        </div>`}
+    </div>`;
+  }).join("") || `<p class="muted">${SV.t("teams_none")}</p>`;
+
+  app.innerHTML = `
+    <h1>${SV.t("teams_h1")}</h1>
+    <p class="muted small">${SV.t("teams_intro")}</p>
+    <div class="card">
+      <h2>${SV.t("teams_new_h2")}</h2>
+      <form class="row" onsubmit="SV.actions.createTeam(event)">
+        <div><label>${SV.t("label_name")}</label><input type="text" id="newTeamName" required placeholder="${SV.t("placeholder_team_name")}"></div>
+        <div><label>${SV.t("label_password_optional")}</label><input type="password" id="newTeamPw"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_create")}</button></div>
+      </form>
+    </div>
+    <div class="card"><h2>${SV.t("teams_existing_h2")}</h2>${rows}</div>
+  `;
+};
+
+SV.actions.createTeam = async function(ev){
+  ev.preventDefault();
+  const name = SV.util.byId("newTeamName").value.trim();
+  const pw = SV.util.byId("newTeamPw").value;
+  if(!name) return;
+  const team = await SV.store.createTeam(name, pw);
+  SV.state.teams.push(team);
+  SV.state.currentTeamId = team.id;
+  SV.ui.toast(SV.t("toast_team_created"));
+  location.hash = "#/agendas";
+};
+
+SV.actions.selectTeam = function(id){
+  const team = SV.state.teams.find(t=>t.id===id);
+  if(team && !team.passwordProtected) SV.store.unlockedKeys[id] = null;
+  SV.state.currentTeamId = id;
+  location.hash = "#/agendas";
+};
+
+SV.actions.unlockTeam = async function(id){
+  const pwEl = SV.util.byId("pw-"+id);
+  const pw = pwEl ? pwEl.value : "";
+  const team = SV.state.teams.find(t=>t.id===id);
+  const ok = await SV.store.unlockWithPassword(team, pw);
+  if(!ok){ SV.ui.toast(SV.t("toast_wrong_password")); return; }
+  SV.state.currentTeamId = id;
+  location.hash = "#/agendas";
+};
+
+SV.actions.deleteTeam = async function(id){
+  const team = SV.state.teams.find(t=>t.id===id);
+  if(team.passwordProtected && !SV.store.isUnlocked(id)){
+    SV.ui.toast(SV.t("toast_unlock_first"));
+    return;
+  }
+  if(!await SV.ui.confirm(SV.t("confirm_delete_team", team.name))) return;
+  await SV.store.deleteTeam(id);
+  if(SV.state.currentTeamId===id) SV.state.currentTeamId = null;
+  SV.router.go();
+};
+
+SV.actions.logoutTeam = function(){
+  if(SV.state.currentTeamId) SV.store.lock(SV.state.currentTeamId);
+  SV.state.currentTeamId = null;
+  location.hash = "#/teams";
+};
+
+/* ---------- gemeinsame Bausteine: Textbloecke / Aufgaben / Antraege je TOP ---------- */
+SV.views.renderBlocksSection = function(kind, containerId, item, editable){
+  const n = item.blocks.length;
+  const rows = item.blocks.map(b=>{
+    const taId = `blk-${b.id}`;
+    if(!editable) return `<div class="small" style="margin-bottom:6px;">${SV.textformat.renderSegmentsHtml(b.content)}</div>`;
+    return `<div style="margin-bottom:8px;">
+      <textarea id="${taId}">${SV.util.esc(b.content)}</textarea>
+      <div class="btn-row" style="margin-top:4px;">
+        <button class="secondary" onclick="SV.actions.editBlock('${kind}','${containerId}','${item.id}','${b.id}','${taId}')">${SV.t("btn_save")}</button>
+        <button class="danger" onclick="SV.actions.deleteBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_delete")}</button>
+      </div>
+    </div>`;
+  }).join("");
+  const trash = (item.geloeschte_blocks||[]).length ? `
+    <details><summary class="small">${SV.t("deleted_blocks_summary", item.geloeschte_blocks.length)}</summary>
+      ${item.geloeschte_blocks.map(b=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((b.content||"").slice(0,60))}…
+        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details>` : "";
+  const addForm = editable ? `
+    <div style="margin-top:6px;">
+      <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
+      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('${kind}','${containerId}','${item.id}','newblk-${item.id}')">${n?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
+    </div>` : "";
+  return `<details ${n?"":""}><summary>${SV.t("blocks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+};
+
+SV.views.renderTasksSection = function(kind, containerId, item, editable){
+  const n = item.aufgaben.length;
+  const rows = item.aufgaben.map(t=>{
+    if(!editable) return `<div class="list-item"><div>${SV.textformat.renderSegmentsHtml(t.text)}</div>
+      <span class="muted small">${SV.t("label_responsible")}: ${SV.util.esc(t.verantwortlich)} · ${SV.t("label_due")}: ${SV.util.dmy(t.termin)}</span>
+      <span class="tag ${t.status==='erledigt'?'done':'status'}">${SV.util.esc(SV.aufgaben.statusLabel(t.status))}</span></div>`;
+    return `<div class="list-item">
+      <textarea id="txt-${t.id}">${SV.util.esc(t.text)}</textarea>
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_responsible")}</label><input type="text" id="ver-${t.id}" value="${SV.util.esc(t.verantwortlich)}"></div>
+        <div><label>${SV.t("label_due")}</label><input type="date" id="ter-${t.id}" value="${SV.util.esc(t.termin)}"></div>
+        <div><label>${SV.t("label_status")}</label><select id="st-${t.id}">${SV.aufgaben.STATUS.map(s=>`<option value="${s}" ${s===t.status?"selected":""}>${SV.aufgaben.statusLabel(s)}</option>`).join("")}</select></div>
+      </div>
+      <div class="btn-row" style="margin-top:6px;">
+        <button class="secondary" onclick="SV.actions.editTaskFull('${kind}','${containerId}','${item.id}','${t.id}')">${SV.t("btn_save")}</button>
+        <button class="danger" onclick="SV.actions.deleteTask('${kind}','${containerId}','${item.id}','${t.id}')">${SV.t("btn_delete")}</button>
+      </div>
+    </div>`;
+  }).join("");
+  const trash = (item.geloeschte_aufgaben||[]).length ? `
+    <details><summary class="small">${SV.t("deleted_tasks_summary", item.geloeschte_aufgaben.length)}</summary>
+      ${item.geloeschte_aufgaben.map(t=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((t.text||"").slice(0,60))}…
+        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreTask('${kind}','${containerId}','${item.id}','${t.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details>` : "";
+  const addForm = editable ? `
+    <div class="row" style="margin-top:6px;">
+      <div><label>${SV.t("label_task")}</label><input type="text" id="newtask-text-${item.id}"></div>
+      <div><label>${SV.t("label_responsible")}</label><input type="text" id="newtask-ver-${item.id}"></div>
+      <div><label>${SV.t("label_due")}</label><input type="date" id="newtask-ter-${item.id}"></div>
+      <div style="flex:0;"><button class="secondary" onclick="SV.actions.addTask('${kind}','${containerId}','${item.id}','newtask-text-${item.id}','newtask-ver-${item.id}','newtask-ter-${item.id}')">${n?SV.t("btn_add_task_more"):SV.t("btn_add_task")}</button></div>
+    </div>` : "";
+  return `<details><summary>${SV.t("tasks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+};
+
+SV.actions.editTaskFull = async function(kind, containerId, itemId, taskId){
+  const text = SV.util.byId(`txt-${taskId}`).value;
+  const ver = SV.util.byId(`ver-${taskId}`).value.trim();
+  const ter = SV.util.byId(`ter-${taskId}`).value;
+  const st = SV.util.byId(`st-${taskId}`).value;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const t = it.aufgaben.find(x=>x.id===taskId);
+    if(t){ t.text = SV.textformat.cleanBlockContent(text); t.verantwortlich=ver; t.termin=ter; t.status=st; }
+  });
+  SV.actions._refresh();
+};
+
+// Ergebnis-Werte bleiben intern immer deutsche Token (gespeicherte Fachdaten,
+// kompatibel mit Export/Import); nur die ANZEIGE wird übersetzt - siehe
+// SV.beschluss.label(). Deshalb jetzt ueberall explizites value="..." an den
+// <option>-Elementen (vorher war Text==Wert, das würde die Übersetzung sonst
+// versehentlich zum neuen Speicherwert machen).
+SV.beschluss = {
+  ERG: [
+    {value:"offen", key:"erg_offen"}, {value:"angenommen", key:"erg_angenommen"},
+    {value:"abgelehnt", key:"erg_abgelehnt"}, {value:"vertagt", key:"erg_vertagt"},
+    {value:"zurückgezogen", key:"erg_zurueckgezogen"},
+  ],
+  label(v){ const e = SV.beschluss.ERG.find(x=>x.value===v); return e ? SV.t(e.key) : v; },
+};
+
+SV.views.renderAntraegeSection = function(containerId, item, editable){
+  const n = item.antraege.length;
+  const ergOptions = (selected)=> SV.beschluss.ERG.map(e=>`<option value="${e.value}" ${e.value===selected?"selected":""}>${SV.beschluss.label(e.value)}</option>`).join("");
+  const rows = item.antraege.map(a=>{
+    if(!editable) return `<div class="list-item">
+      <strong>${SV.t("label_antrag")}:</strong>${SV.textformat.renderSegmentsHtml(a.antrag_text)}
+      <strong>${SV.t("label_beschluss")}:</strong>${SV.textformat.renderSegmentsHtml(a.beschluss_text)}
+      <span class="tag status">${SV.util.esc(SV.beschluss.label(a.ergebnis))}</span>
+      <span class="muted small">${SV.t("label_dafuer")} ${a.dafuer} · ${SV.t("label_dagegen")} ${a.dagegen} · ${SV.t("label_enthaltung")} ${a.enthaltung}</span></div>`;
+    return `<div class="list-item">
+      <label>${SV.t("label_antrag")}</label><textarea id="atxt-${a.id}">${SV.util.esc(a.antrag_text)}</textarea>
+      <label>${SV.t("label_beschluss")}</label><textarea id="abtxt-${a.id}">${SV.util.esc(a.beschluss_text)}</textarea>
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_ergebnis")}</label><select id="aerg-${a.id}">${ergOptions(a.ergebnis)}</select></div>
+        <div><label>${SV.t("label_dafuer")}</label><input type="number" min="0" id="adaf-${a.id}" value="${a.dafuer}"></div>
+        <div><label>${SV.t("label_dagegen")}</label><input type="number" min="0" id="adag-${a.id}" value="${a.dagegen}"></div>
+        <div><label>${SV.t("label_enthaltung")}</label><input type="number" min="0" id="aenth-${a.id}" value="${a.enthaltung}"></div>
+      </div>
+      <div class="btn-row" style="margin-top:6px;">
+        <button class="secondary" onclick="SV.actions.editAntrag('${containerId}','${item.id}','${a.id}',{antrag_text:SV.util.byId('atxt-${a.id}').value,beschluss_text:SV.util.byId('abtxt-${a.id}').value,ergebnis:SV.util.byId('aerg-${a.id}').value,dafuer:+SV.util.byId('adaf-${a.id}').value,dagegen:+SV.util.byId('adag-${a.id}').value,enthaltung:+SV.util.byId('aenth-${a.id}').value})">${SV.t("btn_save")}</button>
+        <button class="danger" onclick="SV.actions.deleteAntrag('${containerId}','${item.id}','${a.id}')">${SV.t("btn_delete")}</button>
+      </div>
+    </div>`;
+  }).join("");
+  const trash = (item.geloeschte_antraege||[]).length ? `
+    <details><summary class="small">${SV.t("deleted_antraege_summary", item.geloeschte_antraege.length)}</summary>
+      ${item.geloeschte_antraege.map(a=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((a.antrag_text||"").slice(0,60))}…
+        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreAntrag('${containerId}','${item.id}','${a.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details>` : "";
+  const addForm = editable ? `
+    <div style="margin-top:6px;">
+      <label>${SV.t("label_antrag")}</label><textarea id="newa-atxt-${item.id}"></textarea>
+      <label>${SV.t("label_beschluss")}</label><textarea id="newa-abtxt-${item.id}"></textarea>
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_ergebnis")}</label><select id="newa-erg-${item.id}">${ergOptions("offen")}</select></div>
+        <div><label>${SV.t("label_dafuer")}</label><input type="number" min="0" id="newa-daf-${item.id}" value="0"></div>
+        <div><label>${SV.t("label_dagegen")}</label><input type="number" min="0" id="newa-dag-${item.id}" value="0"></div>
+        <div><label>${SV.t("label_enthaltung")}</label><input type="number" min="0" id="newa-enth-${item.id}" value="0"></div>
+      </div>
+      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addAntrag('${containerId}','${item.id}',{antrag_text:SV.util.byId('newa-atxt-${item.id}').value,beschluss_text:SV.util.byId('newa-abtxt-${item.id}').value,ergebnis:SV.util.byId('newa-erg-${item.id}').value,dafuer:+SV.util.byId('newa-daf-${item.id}').value,dagegen:+SV.util.byId('newa-dag-${item.id}').value,enthaltung:+SV.util.byId('newa-enth-${item.id}').value})">${n?SV.t("btn_add_antrag_more"):SV.t("btn_add_antrag")}</button>
+    </div>` : "";
+  return `<details><summary>${SV.t("antraege_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+};
+
+/* --- Anhänge --- */
+// display: "anhang" (im Anhang sichtbar, wird in die Protokoll-PDF eingebettet)
+// oder "verborgen" (nicht in der PDF, bleibt aber in der App sichtbar - auch
+// im abgeschlossenen Protokoll, s. meetingView). Zeigt in BEIDEN Modi
+// (editable und nicht editable) alle Anhänge, unabhaengig von display.
+SV.views.renderAttachmentsSection = function(kind, containerId, item, editable){
+  const list = item.anhaenge || [];
+  const n = list.length;
+  const icon = (k)=> k==="pdf" ? "📄" : (k==="bild" ? "🖼️" : "📎");
+  const rows = list.map(at=>{
+    const hiddenTag = at.display==="verborgen" ? `<span class="tag">${SV.t("tag_not_in_pdf")}</span>` : ``;
+    if(!editable){
+      const label = SV.util.esc(at.caption || at.filename);
+      return `<div class="small" style="margin-bottom:6px;">
+        ${icon(at.kind)} <a href="javascript:void(0)" onclick="SV.actions.openAttachment('${at.id}')">${label}</a>
+        ${at.caption && at.showFilename ? ` <span class="muted">(${SV.util.esc(at.filename)})</span>` : ``} ${hiddenTag}
+      </div>`;
+    }
+    return `<div class="list-item">
+      ${icon(at.kind)} <a href="javascript:void(0)" onclick="SV.actions.openAttachment('${at.id}')">${SV.util.esc(at.filename)}</a> ${hiddenTag}
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_caption_optional")}</label><input type="text" id="atc-${at.id}" value="${SV.util.esc(at.caption)}"></div>
+        <div><label>${SV.t("label_display_in_protocol")}</label><select id="atd-${at.id}">
+          <option value="anhang" ${at.display!=="verborgen"?"selected":""}>${SV.t("opt_in_attachment")}</option>
+          <option value="verborgen" ${at.display==="verborgen"?"selected":""}>${SV.t("opt_hidden")}</option>
+        </select></div>
+        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="atf-${at.id}" ${at.showFilename?"checked":""} style="width:auto;"> ${SV.t("label_show_filename")}</label></div>
+      </div>
+      <div class="btn-row" style="margin-top:6px;">
+        <button class="secondary" onclick="SV.actions.editAttachment('${kind}','${containerId}','${item.id}','${at.id}')">${SV.t("btn_save")}</button>
+        <button class="danger" onclick="SV.actions.deleteAttachment('${kind}','${containerId}','${item.id}','${at.id}')">${SV.t("btn_delete")}</button>
+      </div>
+    </div>`;
+  }).join("");
+  const trash = editable && (item.geloeschte_anhaenge||[]).length ? `
+    <details><summary class="small">${SV.t("deleted_attachments_summary", item.geloeschte_anhaenge.length)}</summary>
+      ${item.geloeschte_anhaenge.map(at=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc(at.filename)}
+        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreAttachment('${kind}','${containerId}','${item.id}','${at.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details>` : "";
+  const addForm = editable ? `
+    <div style="margin-top:6px;">
+      <div class="row">
+        <div><label>${SV.t("label_file_img_pdf")}</label><input type="file" id="newat-file-${item.id}" accept=".jpg,.jpeg,.png,.gif,.webp,.heic,.heif,.pdf,image/*,application/pdf"></div>
+        <div><label>${SV.t("label_caption_optional")}</label><input type="text" id="newat-cap-${item.id}"></div>
+      </div>
+      <div class="row" style="margin-top:4px; align-items:center;">
+        <div><label>${SV.t("label_display_in_protocol")}</label><select id="newat-disp-${item.id}">
+          <option value="anhang" selected>${SV.t("opt_in_attachment")}</option>
+          <option value="verborgen">${SV.t("opt_hidden")}</option>
+        </select></div>
+        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="newat-fn-${item.id}" style="width:auto;"> ${SV.t("label_show_filename")}</label></div>
+        <div style="flex:0;"><button class="secondary" onclick="SV.actions.addAttachment('${kind}','${containerId}','${item.id}','newat-file-${item.id}','newat-cap-${item.id}','newat-disp-${item.id}','newat-fn-${item.id}')">${n?SV.t("btn_add_attachment_more"):SV.t("btn_add_attachment")}</button></div>
+      </div>
+    </div>` : "";
+  return `<details><summary>${SV.t("attachments_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+};
+
+SV.actions.addAttachment = async function(kind, containerId, itemId, fileInputId, capId, dispId, fnId){
+  const fileInput = SV.util.byId(fileInputId);
+  const file = fileInput && fileInput.files && fileInput.files[0];
+  if(!file){ SV.ui.toast(SV.t("toast_select_file")); return; }
+  const detectedKind = SV.model.attachmentKind(file.name);
+  if(!detectedKind){ SV.ui.toast(SV.t("toast_unsupported_filetype")); return; }
+  const caption = SV.util.byId(capId).value.trim();
+  const display = SV.util.byId(dispId).value;
+  const showFilename = SV.util.byId(fnId).checked;
+  const attachment = SV.model.newAttachment(file.name, display, caption);
+  attachment.showFilename = showFilename;
+  try{
+    await SV.store.saveAttachmentFile(SV.state.currentTeamId, kind+"-"+itemId, attachment.id, file);
+  }catch(e){
+    SV.ui.toast(e && e.message==="TEAM_LOCKED" ? SV.t("toast_team_locked") : SV.t("toast_file_save_failed"));
+    return;
+  }
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    it.anhaenge = it.anhaenge || [];
+    it.anhaenge.push(attachment);
+  });
+  SV.actions._refresh();
+};
+SV.actions.editAttachment = async function(kind, containerId, itemId, attachmentId){
+  const caption = SV.util.byId(`atc-${attachmentId}`).value.trim();
+  const display = SV.util.byId(`atd-${attachmentId}`).value;
+  const showFilename = SV.util.byId(`atf-${attachmentId}`).checked;
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const at = (it.anhaenge||[]).find(x=>x.id===attachmentId);
+    if(at){ at.caption=caption; at.display = display==="verborgen"?"verborgen":"anhang"; at.showFilename=showFilename; }
+  });
+  SV.actions._refresh();
+};
+SV.actions.deleteAttachment = async function(kind, containerId, itemId, attachmentId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const at = (it.anhaenge||[]).find(x=>x.id===attachmentId);
+    if(at){
+      at.deleted_at = SV.util.nowIso();
+      it.geloeschte_anhaenge = it.geloeschte_anhaenge || [];
+      it.geloeschte_anhaenge.push(at);
+      it.anhaenge = it.anhaenge.filter(x=>x.id!==attachmentId);
+    }
+  });
+  SV.actions._refresh();
+};
+SV.actions.restoreAttachment = async function(kind, containerId, itemId, attachmentId){
+  await SV.actions._mutate(kind, containerId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    const at = (it.geloeschte_anhaenge||[]).find(x=>x.id===attachmentId);
+    if(at){
+      delete at.deleted_at;
+      it.geloeschte_anhaenge = it.geloeschte_anhaenge.filter(x=>x.id!==attachmentId);
+      it.anhaenge = it.anhaenge || [];
+      it.anhaenge.push(at);
+    }
+  });
+  SV.actions._refresh();
+};
+// Oeffnet einen Anhang (entschluesselt bei Bedarf) in einem neuen Tab/Fenster.
+// Das Zielfenster wird SOFORT (noch im Klick-Handler) geoeffnet, bevor
+// asynchron entschluesselt wird - sonst blockieren manche Browser (v.a.
+// Safari auf iPad/iPhone) das Popup, weil der Nutzergesten-Kontext nach
+// einem await verloren geht.
+SV.actions.openAttachment = async function(attachmentId){
+  const win = window.open("", "_blank");
+  try{
+    const blob = await SV.store.getAttachmentBlob(SV.state.currentTeamId, attachmentId);
+    if(!blob){ if(win) win.close(); SV.ui.toast(SV.t("toast_attachment_not_found")); return; }
+    const url = URL.createObjectURL(blob);
+    if(win){ win.location.href = url; }
+    else { SV.util.downloadBlob(blob, "anhang"); }
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    if(win) win.close();
+    SV.ui.toast(e && e.message==="TEAM_LOCKED" ? SV.t("toast_team_locked") : SV.t("toast_attachment_open_failed"));
+  }
+};
+
+/* ---------- Agenden ---------- */
+SV.views._meetingsByAgenda = async function(teamId){
+  const meetings = await SV.store.listMeetings(teamId);
+  const map = {};
+  meetings.forEach(m=>{
+    if(m.agenda_id){ (map[m.agenda_id] = map[m.agenda_id]||[]).push(m); }
+  });
+  Object.values(map).forEach(list=> list.sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.created_at||"").localeCompare(a.created_at||"")));
+  return map;
+};
+
+SV.views.agendaList = async function(app, query){
+  const teamId = SV.state.currentTeamId;
+  let agendas = await SV.store.listAgendas(teamId);
+  const dateFilter = query.date || "";
+  if(dateFilter) agendas = agendas.filter(a=>a.date===dateFilter);
+  const byAgenda = await SV.views._meetingsByAgenda(teamId);
+  const alte = agendas.filter(a=> byAgenda[a.id]);
+  const aktuelle = agendas.filter(a=> !byAgenda[a.id]);
+
+  const row = (a, alt)=>`
+    <div class="list-item">
+      <strong>${a.date?SV.util.esc(SV.util.dmy(a.date)):SV.t("no_date")}</strong> — ${SV.util.esc(a.title)||SV.t("no_title")}
+      <span class="muted small">${SV.t("items_count", a.items.length)}</span>
+      ${alt ? `<span class="tag status">${byAgenda[a.id].length===1?SV.t("tag_already_started_once"):SV.t("tag_already_started_n", byAgenda[a.id].length)}</span>` : ``}
+      <div class="actions">
+        <button class="secondary" onclick="location.hash='#/agendas/${a.id}'">${SV.t("btn_edit")}</button>
+        <button onclick="SV.actions.startMeeting('${a.id}')">${alt?SV.t("btn_start_meeting_again"):SV.t("btn_start_meeting")}</button>
+        <button class="danger" onclick="SV.actions.deleteAgenda('${a.id}')">${SV.t("btn_delete")}</button>
+      </div>
+      ${alt ? `<p class="muted small" style="margin-top:4px;">${SV.t("started_from")}${byAgenda[a.id].map(m=>`<a href="#/meetings/${m.id}">${m.date?SV.util.dmy(m.date):SV.t("no_date")} (${m.status==="abgeschlossen"?SV.t("status_done_label"):SV.t("status_running_label")})</a>`).join(", ")}</p>` : ``}
+    </div>`;
+
+  app.innerHTML = `
+    <h1>${SV.t("agendas_h1")}</h1>
+    <div class="card">
+      <h2>${SV.t("agendas_search_h2")}</h2>
+      <form class="row" onsubmit="event.preventDefault(); location.hash='#/agendas?date='+encodeURIComponent(SV.util.byId('dateFilter').value);">
+        <div><label>${SV.t("label_date")}</label><input type="date" id="dateFilter" value="${SV.util.esc(dateFilter)}"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_search")}</button></div>
+        ${dateFilter?`<div style="flex:0;"><button type="button" class="secondary" onclick="location.hash='#/agendas'">${SV.t("btn_reset")}</button></div>`:``}
+      </form>
+    </div>
+    <div class="card">
+      <h2>${SV.t("agenda_new_h2")}</h2>
+      <p class="muted small">${SV.t("agenda_new_hint")}</p>
+      <form class="row" onsubmit="SV.actions.createAgenda(event)">
+        <div><label>${SV.t("label_title")}</label><input type="text" id="newAgendaTitle" required placeholder="${SV.t("placeholder_agenda_title")}"></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="newAgendaDate"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_create")}</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>${dateFilter?SV.t("agendas_at_date_h2", SV.util.dmy(dateFilter)):SV.t("agendas_all_h2")}</h2>
+      ${aktuelle.length ? aktuelle.map(a=>row(a,false)).join("") : `<p class="muted">${SV.t("agendas_none")}</p>`}
+    </div>
+    ${alte.length ? `
+    <div class="card">
+      <details>
+        <summary class="small"><strong>${SV.t("old_agendas_summary", alte.length)}</strong></summary>
+        <p class="muted small" style="margin-top:6px;">${SV.t("old_agendas_hint")}</p>
+        ${alte.map(a=>row(a,true)).join("")}
+      </details>
+    </div>` : ``}
+  `;
+};
+
+SV.actions.createAgenda = async function(ev){
+  ev.preventDefault();
+  const title = SV.util.byId("newAgendaTitle").value.trim();
+  const date = SV.util.byId("newAgendaDate").value;
+  if(!title) return;
+  const a = SV.model.newAgenda(title, date);
+  await SV.store.saveAgenda(SV.state.currentTeamId, a);
+  location.hash = "#/agendas/"+a.id;
+};
+
+SV.actions.deleteAgenda = async function(id){
+  if(!await SV.ui.confirm(SV.t("confirm_delete_agenda"))) return;
+  const teamId = SV.state.currentTeamId;
+  const agenda = await SV.store.getAgenda(teamId, id);
+  if(agenda){
+    // Anhang-Rohdaten aller TOPs (auch geloeschter) mit aufräumen, sonst
+    // bleiben verwaiste Dateien im attachments-Store liegen.
+    const allItems = (agenda.items||[]).concat(agenda.geloeschte_items||[]);
+    for(const it of allItems) await SV.store.deleteAttachmentsByScope("agenda-"+it.id);
+  }
+  await SV.store.deleteAgenda(id);
+  SV.router.go();
+};
+
+SV.views.agendaEdit = async function(app, agendaId){
+  const teamId = SV.state.currentTeamId;
+  const agenda = await SV.store.getAgenda(teamId, agendaId);
+  if(!agenda){ app.innerHTML = `<div class="card">${SV.t("agenda_not_found")} <a href="#/agendas">${SV.t("back_generic")}</a></div>`; return; }
+  const numbered = SV.model.numberedItems(agenda.items);
+
+  const itemHtml = numbered.map(({item,number,depth})=>`
+    <div class="list-item ${depth?'' : ''}" id="item-${item.id}" style="${depth?'margin-left:22px;border-left:3px solid var(--blue);':''}">
+      <div class="row" style="align-items:center;">
+        <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
+        <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}"></div>
+        <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('agenda','${agenda.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
+      </div>
+      <div class="actions">
+        <button class="secondary" onclick="SV.actions.indentItem('agenda','${agenda.id}','${item.id}','out')" title="${SV.t("title_promote")}">←</button>
+        <button class="secondary" onclick="SV.actions.indentItem('agenda','${agenda.id}','${item.id}','in')" title="${SV.t("title_demote")}">→</button>
+        <button class="secondary" onclick="SV.actions.toggleItemPublic('agenda','${agenda.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
+        <button class="danger" onclick="SV.actions.deleteItem('agenda','${agenda.id}','${item.id}')">${SV.t("btn_delete")}</button>
+      </div>
+      ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
+      <div style="margin-top:6px;">
+        ${SV.views.renderBlocksSection("agenda", agenda.id, item, true)}
+        ${SV.views.renderTasksSection("agenda", agenda.id, item, true)}
+        ${SV.views.renderAttachmentsSection("agenda", agenda.id, item, true)}
+      </div>
+    </div>`).join("");
+
+  const trashItems = (agenda.geloeschte_items||[]).length ? `
+    <div class="card"><details><summary>${SV.t("deleted_items_summary", agenda.geloeschte_items.length)}</summary>
+      ${agenda.geloeschte_items.map(it=>`<div class="list-item small">${SV.util.esc(it.title)}
+        <button class="secondary" style="margin-left:8px;" onclick="SV.actions.restoreItem('agenda','${agenda.id}','${it.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details></div>` : "";
+
+  app.innerHTML = `
+    <p><a href="#/agendas">${SV.t("back_to_agendas")}</a></p>
+    <h1>${SV.t("agenda_edit_h1")}</h1>
+    <div class="card">
+      <form class="row" onsubmit="SV.actions.updateAgendaMeta(event,'${agenda.id}')">
+        <div><label>${SV.t("label_title")}</label><input type="text" id="editAgendaTitle" required value="${SV.util.esc(agenda.title)}"></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editAgendaDate" value="${SV.util.esc(agenda.date)}"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>${SV.t("agenda_items_h2")}</h2>
+      ${itemHtml || `<p class="muted">${SV.t("no_items_yet")}</p>`}
+      <hr>
+      <div class="row">
+        <div><label>${SV.t("new_agenda_item_label")}</label><input type="text" id="newItemTitle"></div>
+        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="newItemPublic" checked style="width:auto;"> ${SV.t("label_public_checkbox")}</label></div>
+        <div style="flex:0;"><button id="addItemBtn" onclick="SV.actions.addItem('agenda','${agenda.id}','newItemTitle','newItemPublic')">${SV.t("btn_add")}</button></div>
+      </div>
+    </div>
+    ${trashItems}
+    <div class="btn-row">
+      <button class="secondary" onclick="SV.pdf.agendaPdf('${agenda.id}')">${SV.t("btn_agenda_pdf")}</button>
+      <button onclick="SV.actions.startMeeting('${agenda.id}')">${SV.t("btn_start_meeting")}</button>
+    </div>
+  `;
+  SV.util.installAutoGrow(app);
+};
+
+SV.actions.updateAgendaMeta = async function(ev, agendaId){
+  ev.preventDefault();
+  const title = SV.util.byId("editAgendaTitle").value.trim();
+  const date = SV.util.byId("editAgendaDate").value;
+  if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
+  await SV.actions._mutate("agenda", agendaId, (c)=>{ c.title=title; c.date=date; });
+  SV.router.go();
+};
+
+SV.actions.startMeeting = async function(agendaId){
+  const teamId = SV.state.currentTeamId;
+  const agenda = await SV.store.getAgenda(teamId, agendaId);
+  const meeting = SV.model.newMeeting(agenda.date, agenda.title, agenda.id);
+  meeting.items = await SV.model.buildMeetingItemsFromAgenda(agenda.items);
+  await SV.store.saveMeeting(teamId, meeting);
+  location.hash = "#/meetings/"+meeting.id;
+};
+
+/* ---------- Sitzungen ---------- */
+SV.views.meetingList = async function(app){
+  const teamId = SV.state.currentTeamId;
+  const meetings = await SV.store.listMeetings(teamId);
+  meetings.sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.created_at||"").localeCompare(a.created_at||""));
+  const rows = meetings.map(m=>`
+    <div class="list-item">
+      <strong>${m.date?SV.util.dmy(m.date):SV.t("no_date")}</strong> — ${SV.util.esc(m.title)||SV.t("no_title")}
+      <span class="tag ${m.status==='abgeschlossen'?'done':'status'}">${m.status==='abgeschlossen'?SV.t("status_done_label"):SV.t("status_running_tag")}</span>
+      <div class="actions">
+        <button onclick="location.hash='#/meetings/${m.id}'">${SV.t("btn_open")}</button>
+        <button class="danger" onclick="SV.actions.deleteMeeting('${m.id}')">${SV.t("btn_delete")}</button>
+      </div>
+    </div>`).join("") || `<p class="muted">${SV.t("meetings_none")}</p>`;
+  app.innerHTML = `
+    <h1>${SV.t("meetings_h1")}</h1>
+    <div class="card">
+      <h2>${SV.t("meeting_new_h2")}</h2>
+      <form class="row" onsubmit="SV.actions.createMeeting(event)">
+        <div><label>${SV.t("label_title")}</label><input type="text" id="newMeetingTitle" required></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="newMeetingDate"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_create")}</button></div>
+      </form>
+    </div>
+    <div class="card"><h2>${SV.t("meetings_all_h2")}</h2>${rows}</div>
+    <div class="card">
+      <h2>${SV.t("import_old_h2")}</h2>
+      <p class="muted small">${SV.t("import_old_desc")}</p>
+      <button class="secondary" onclick="location.hash='#/import'">${SV.t("btn_import_old")}</button>
+    </div>
+  `;
+};
+SV.actions.createMeeting = async function(ev){
+  ev.preventDefault();
+  const title = SV.util.byId("newMeetingTitle").value.trim();
+  const date = SV.util.byId("newMeetingDate").value;
+  if(!title) return;
+  const m = SV.model.newMeeting(date, title, null);
+  await SV.store.saveMeeting(SV.state.currentTeamId, m);
+  location.hash = "#/meetings/"+m.id;
+};
+SV.actions.deleteMeeting = async function(id){
+  if(!await SV.ui.confirm(SV.t("confirm_delete_meeting"))) return;
+  const teamId = SV.state.currentTeamId;
+  const meeting = await SV.store.getMeeting(teamId, id);
+  if(meeting){
+    const allItems = (meeting.items||[]).concat(meeting.geloeschte_items||[]);
+    for(const it of allItems) await SV.store.deleteAttachmentsByScope("meeting-"+it.id);
+  }
+  await SV.store.deleteMeeting(id);
+  SV.router.go();
+};
+
+SV.views.meetingRun = async function(app, meetingId){
+  const teamId = SV.state.currentTeamId;
+  const meeting = await SV.store.getMeeting(teamId, meetingId);
+  if(!meeting){ app.innerHTML = `<div class="card">${SV.t("meeting_not_found")} <a href="#/meetings">${SV.t("back_generic")}</a></div>`; return; }
+  if(meeting.status === "abgeschlossen") return SV.views.meetingView(app, meeting);
+
+  const numbered = SV.model.numberedItems(meeting.items);
+  const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
+
+  const itemHtml = numbered.map(({item,number,depth})=>`
+    <div class="top-block ${depth?'sub':''}" id="top-${item.id}">
+      <div class="row" style="align-items:center;">
+        <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
+        <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}"></div>
+        <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('meeting','${meeting.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
+      </div>
+      <div class="small muted" style="margin-top:2px;">
+        ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
+        ${item.status!=='normal'?`<span class="tag status">${STATUS_LABEL[item.status]}</span>`:``}
+      </div>
+      <div class="actions">
+        <button class="secondary" onclick="SV.actions.moveItem('meeting','${meeting.id}','${item.id}','up')">↑</button>
+        <button class="secondary" onclick="SV.actions.moveItem('meeting','${meeting.id}','${item.id}','down')">↓</button>
+        <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','out')">←</button>
+        <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','in')">→</button>
+        <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
+        ${item.status==='normal'?`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','verschoben')">${SV.t("btn_mark_postponed")}</button>
+          <button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
+          :`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
+        <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
+      </div>
+      <div style="margin-top:6px;">
+        ${SV.views.renderBlocksSection("meeting", meeting.id, item, true)}
+        ${SV.views.renderAntraegeSection(meeting.id, item, true)}
+        ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
+        ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true)}
+      </div>
+    </div>`).join("");
+
+  const trashItems = (meeting.geloeschte_items||[]).length ? `
+    <div class="card"><details><summary>${SV.t("deleted_items_summary", meeting.geloeschte_items.length)}</summary>
+      ${meeting.geloeschte_items.map(it=>`<div class="list-item small">${SV.util.esc(it.title)}
+        <button class="secondary" style="margin-left:8px;" onclick="SV.actions.restoreItem('meeting','${meeting.id}','${it.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details></div>` : "";
+
+  app.innerHTML = `
+    <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
+    <div class="card">
+      <form class="row" onsubmit="SV.actions.updateMeetingMeta(event,'${meeting.id}')">
+        <div><label>${SV.t("label_title")}</label><input type="text" id="editMeetingTitle" required value="${SV.util.esc(meeting.title)}"></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editMeetingDate" value="${SV.util.esc(meeting.date)}"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
+      </form>
+    </div>
+    ${itemHtml || `<p class="muted">${SV.t("no_items_yet")}</p>`}
+    <div class="card">
+      <div class="row">
+        <div><label>${SV.t("new_agenda_item_label")}</label><input type="text" id="newItemTitle"></div>
+        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="newItemPublic" checked style="width:auto;"> ${SV.t("label_public_checkbox")}</label></div>
+        <div style="flex:0;"><button id="addItemBtn" onclick="SV.actions.addItem('meeting','${meeting.id}','newItemTitle','newItemPublic')">${SV.t("btn_add")}</button></div>
+      </div>
+    </div>
+    ${trashItems}
+    <div class="btn-row" style="margin-top:10px;">
+      <button onclick="SV.actions.completeMeeting('${meeting.id}')">${SV.t("btn_complete_meeting")}</button>
+      <button class="danger" onclick="SV.actions.deleteMeeting('${meeting.id}')">${SV.t("btn_delete_meeting")}</button>
+    </div>
+  `;
+  SV.util.installAutoGrow(app);
+};
+
+SV.actions.updateMeetingMeta = async function(ev, meetingId){
+  ev.preventDefault();
+  const title = SV.util.byId("editMeetingTitle").value.trim();
+  const date = SV.util.byId("editMeetingDate").value;
+  if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.title=title; c.date=date; });
+  SV.router.go();
+};
+SV.actions.completeMeeting = async function(meetingId){
+  if(!await SV.ui.confirm(SV.t("confirm_complete_meeting"))) return;
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.status="abgeschlossen"; c.completed_at=SV.util.nowIso(); });
+  SV.router.go();
+};
+SV.actions.reopenMeeting = async function(meetingId){
+  if(!await SV.ui.confirm(SV.t("confirm_reopen_meeting"))) return;
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.status="laufend"; });
+  SV.router.go();
+};
+
+SV.views.meetingView = function(app, meeting){
+  const numbered = SV.model.numberedItems(meeting.items);
+  const itemHtml = numbered.map(({item,number,depth})=>`
+    <div class="top-block ${depth?'sub':''}">
+      <div class="top-title">${number}. ${SV.util.esc(item.title)} ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}</div>
+      ${item.blocks.map(b=>SV.textformat.renderSegmentsHtml(b.content)).join("")}
+      ${item.antraege.map(a=>`<div class="small" style="margin:6px 0;"><strong>${SV.t("label_antrag")}:</strong>${SV.textformat.renderSegmentsHtml(a.antrag_text)}<strong>${SV.t("label_beschluss")}:</strong>${SV.textformat.renderSegmentsHtml(a.beschluss_text)}
+        <span class="tag status">${SV.util.esc(SV.beschluss.label(a.ergebnis))}</span> <span class="muted small">${SV.t("label_dafuer")} ${a.dafuer} · ${SV.t("label_dagegen")} ${a.dagegen} · ${SV.t("label_enthaltung")} ${a.enthaltung}</span></div>`).join("")}
+      ${item.aufgaben.map(t=>`<div class="small" style="margin:6px 0;"><strong>${SV.t("label_task")}:</strong>${SV.textformat.renderSegmentsHtml(t.text)}
+        <span class="muted small">${SV.t("label_responsible")}: ${SV.util.esc(t.verantwortlich)} · ${SV.t("label_due")}: ${SV.util.dmy(t.termin)}</span>
+        <span class="tag ${t.status==='erledigt'?'done':'status'}">${SV.aufgaben.statusLabel(t.status)}</span></div>`).join("")}
+      ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, false)}
+    </div>`).join("");
+
+  app.innerHTML = `
+    <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
+    <h1>${SV.util.esc(meeting.title)||SV.t("no_title")}</h1>
+    <p class="muted">${meeting.date?SV.util.dmy(meeting.date):SV.t("no_date")} · ${SV.t("status_done_label")}${meeting.completed_at?SV.t("completed_on", SV.util.dmy(meeting.completed_at.slice(0,10))):""}</p>
+    ${itemHtml}
+    <div class="card">
+      <div class="btn-row">
+        <button onclick="SV.pdf.protocolPdf('${meeting.id}', false)">${SV.t("btn_pdf_public")}</button>
+        <button class="secondary" onclick="SV.pdf.protocolPdf('${meeting.id}', true)">${SV.t("btn_pdf_full")}</button>
+      </div>
+      <details style="margin-top:10px;">
+        <summary class="small">${SV.t("reopen_summary")}</summary>
+        <p class="muted small">${SV.t("reopen_hint")}</p>
+        <button class="secondary" onclick="SV.actions.reopenMeeting('${meeting.id}')">${SV.t("btn_reopen")}</button>
+      </details>
+    </div>
+  `;
+};
+
+/* ---------- Beschlussliste ---------- */
+SV.views._collectBeschluesse = async function(teamId){
+  const meetings = await SV.store.listMeetings(teamId);
+  const out = [];
+  meetings.forEach(m=>{
+    (m.items||[]).forEach(it=>{
+      (it.antraege||[]).forEach(a=> out.push({a, meeting:m, item:it}));
+    });
+  });
+  out.sort((x,y)=> (y.meeting.date||"").localeCompare(x.meeting.date||""));
+  return out;
+};
+
+SV.views.beschlussListView = async function(app, query){
+  const teamId = SV.state.currentTeamId;
+  const all = await SV.views._collectBeschluesse(teamId);
+  const q = (query.q||"").toLowerCase();
+  const filtered = q ? all.filter(x=> (x.a.antrag_text+" "+x.a.beschluss_text+" "+x.item.title).toLowerCase().includes(q)) : all;
+
+  const rows = filtered.map(({a,meeting,item})=>`
+    <div class="list-item">
+      <strong>${meeting.date?SV.util.dmy(meeting.date):SV.t("no_date")}</strong> — ${SV.util.esc(meeting.title)} · ${SV.util.esc(item.title)}
+      <span class="tag status">${SV.util.esc(SV.beschluss.label(a.ergebnis))}</span>
+      <div><strong>${SV.t("label_antrag")}:</strong>${SV.textformat.renderSegmentsHtml(a.antrag_text)}</div>
+      <div><strong>${SV.t("label_beschluss")}:</strong>${SV.textformat.renderSegmentsHtml(a.beschluss_text)}</div>
+      <span class="muted small">${SV.t("label_dafuer")} ${a.dafuer} · ${SV.t("label_dagegen")} ${a.dagegen} · ${SV.t("label_enthaltung")} ${a.enthaltung}</span>
+      <div><a class="small" href="javascript:void(0)" onclick="SV.actions.jumpToItem('meeting','${meeting.id}','${item.id}')">${SV.t("link_jump_to_protocol")}</a></div>
+    </div>`).join("") || `<p class="muted">${SV.t("beschluesse_none")}</p>`;
+
+  SV.state._beschlussExportData = filtered;
+
+  app.innerHTML = `
+    <h1>${SV.t("beschlussliste_h1")}</h1>
+    <div class="card">
+      <form class="row" onsubmit="event.preventDefault(); location.hash='#/beschluesse?q='+encodeURIComponent(SV.util.byId('bsearch').value);">
+        <div><label>${SV.t("label_search")}</label><input type="search" id="bsearch" value="${SV.util.esc(query.q||"")}"></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_search")}</button></div>
+      </form>
+    </div>
+    <div class="card">${rows}</div>
+    <hr>
+    <form id="beschluss-export-form" class="row" style="align-items:center;">
+      <div style="flex:0;">
+        <label>${SV.t("label_pdf_format")}</label>
+        <select id="bFormat"><option value="ausfuehrlich">${SV.t("opt_ausfuehrlich")}</option><option value="tabelle">${SV.t("opt_tabelle")}</option></select>
+      </div>
+      <div class="btn-row" style="align-self:center; margin-top:14px;">
+        <button type="button" onclick="SV.pdf.beschlusslistePdf(SV.state._beschlussExportData, SV.util.byId('bFormat').value)">${SV.t("btn_export_pdf")}</button>
+      </div>
+    </form>
+  `;
+};
+
+SV.actions.jumpToItem = function(kind, containerId, itemId){
+  SV.state.scrollTarget = (kind==="meeting"?"top-":"item-") + itemId;
+  location.hash = kind==="meeting" ? "#/meetings/"+containerId : "#/agendas/"+containerId;
+};
+
+/* ---------- Aufgaben (teamübergreifend) ---------- */
+SV.aufgaben = {
+  STATUS: ["neu","in_arbeit","zurueckgestellt","gestoppt","erledigt"],
+  statusLabel(s){ return SV.t("status_"+s) || s; },
+
+  async collect(teamIds){
+    const out = [];
+    for(const teamId of teamIds){
+      if(!SV.store.isUnlocked(teamId)) continue;
+      const team = SV.state.teams.find(t=>t.id===teamId);
+      const agendas = await SV.store.listAgendas(teamId);
+      const meetings = await SV.store.listMeetings(teamId);
+      const addFrom = (containers, kind)=>{
+        containers.forEach(c=>{
+          (c.items||[]).forEach(it=>{
+            (it.aufgaben||[]).forEach(t=> out.push({
+              teamId, teamName: team?team.name:"?", kind, containerId:c.id, itemId:it.id, task:t,
+              containerTitle: c.title, containerDate: c.date, containerStatus: kind==="meeting"?c.status:null,
+            }));
+          });
+        });
+      };
+      addFrom(agendas, "agenda");
+      addFrom(meetings, "meeting");
+    }
+    return out;
+  },
+};
+
+SV.views.aufgabenListView = async function(app, query){
+  SV.state.teams = await SV.store.listTeams();
+  const accessible = SV.state.teams.filter(t=> SV.store.isUnlocked(t.id));
+  const locked = SV.state.teams.filter(t=> !SV.store.isUnlocked(t.id));
+
+  let selectedTeamIds = query.teams ? query.teams.split(",") : accessible.map(t=>t.id);
+  const q = (query.q||"").toLowerCase();
+  const terminBis = query.bis || "";
+  const hideDone = query.hide === "1";
+  const sortBy = query.sort || "termin";
+
+  let entries = await SV.aufgaben.collect(selectedTeamIds);
+  if(q) entries = entries.filter(e=> (e.task.text+" "+e.task.verantwortlich).toLowerCase().includes(q));
+  if(terminBis) entries = entries.filter(e=> e.task.termin && e.task.termin <= terminBis);
+  if(hideDone) entries = entries.filter(e=> e.task.status !== "erledigt");
+  const sorters = {
+    termin: (a,b)=> (a.task.termin||"9999").localeCompare(b.task.termin||"9999"),
+    team: (a,b)=> a.teamName.localeCompare(b.teamName,"de"),
+    status: (a,b)=> a.task.status.localeCompare(b.task.status),
+    verantwortlich: (a,b)=> (a.task.verantwortlich||"").localeCompare(b.task.verantwortlich||"","de"),
+  };
+  entries.sort(sorters[sortBy] || sorters.termin);
+  SV.state._aufgabenExportData = entries;
+
+  const teamCheckboxes = SV.state.teams.length > 1 ? `
+    <div class="card"><h2>${SV.t("teams_h2")}</h2>
+      ${accessible.map(t=>`<label class="small" style="display:inline-block; margin-right:14px;"><input type="checkbox" style="width:auto;" ${selectedTeamIds.includes(t.id)?"checked":""} onchange="SV.actions.toggleAufgabenTeam('${t.id}')"> ${SV.util.esc(t.name)}</label>`).join("")}
+      ${locked.map(t=>`<div class="small muted" style="margin-top:6px;">🔒 ${SV.util.esc(t.name)} ${SV.t("label_locked_suffix")}
+        <input type="password" id="ulpw-${t.id}" style="width:140px; display:inline-block;" onkeydown="if(event.key==='Enter')SV.actions.unlockForAufgaben('${t.id}')">
+        <button class="secondary" style="padding:4px 10px;" onclick="SV.actions.unlockForAufgaben('${t.id}')">${SV.t("btn_unlock")}</button></div>`).join("")}
+    </div>` : "";
+
+  const rows = entries.map(e=>{
+    const t = e.task;
+    return `<div class="list-item">
+      <div>${SV.textformat.renderSegmentsHtml(t.text)}</div>
+      ${SV.state.teams.length>1?`<span class="tag">${SV.util.esc(e.teamName)}</span>`:""}
+      <span class="tag status">${e.containerTitle?SV.util.esc(e.containerTitle):""}</span>
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_responsible")}</label><input type="text" id="aufv-${t.id}" value="${SV.util.esc(t.verantwortlich)}"></div>
+        <div><label>${SV.t("label_due")}</label><input type="date" id="auft-${t.id}" value="${SV.util.esc(t.termin)}"></div>
+        <div><label>${SV.t("label_status")}</label><select id="aufs-${t.id}">${SV.aufgaben.STATUS.map(s=>`<option value="${s}" ${s===t.status?"selected":""}>${SV.aufgaben.statusLabel(s)}</option>`).join("")}</select></div>
+        <div style="flex:0; align-self:end;"><button class="secondary" onclick="SV.actions.updateTask('${e.kind}','${e.containerId}','${e.itemId}','${t.id}',SV.util.byId('aufs-${t.id}').value,SV.util.byId('aufv-${t.id}').value,SV.util.byId('auft-${t.id}').value).then(()=>SV.router.go())">${SV.t("btn_save")}</button></div>
+      </div>
+      <div class="small" style="margin-top:4px;">
+        ${(t.kommentare||[]).map(k=>`<div class="muted">💬 ${SV.util.esc(k.text)}</div>`).join("")}
+        <input type="text" id="aufc-${t.id}" placeholder="${SV.t("placeholder_add_comment")}" style="margin-top:4px;" onkeydown="if(event.key==='Enter'){SV.actions.addTaskComment('${e.kind}','${e.containerId}','${e.itemId}','${t.id}','aufc-${t.id}');}">
+      </div>
+      <div style="margin-top:4px;"><a class="small" href="javascript:void(0)" onclick="SV.actions.jumpToItem('${e.kind}','${e.containerId}','${e.itemId}')">${SV.t("link_jump_to_protocol_agenda")}</a></div>
+    </div>`;
+  }).join("") || `<p class="muted">${SV.t("aufgaben_none")}</p>`;
+
+  app.innerHTML = `
+    <h1>${SV.t("aufgaben_h1")}</h1>
+    ${teamCheckboxes}
+    <div class="card">
+      <form class="row" onsubmit="event.preventDefault(); SV.actions.applyAufgabenFilter();">
+        <div><label>${SV.t("label_search")}</label><input type="search" id="aufQ" value="${SV.util.esc(query.q||"")}"></div>
+        <div><label>${SV.t("label_due_until_optional")}</label><input type="date" id="aufBis" value="${SV.util.esc(terminBis)}"></div>
+        <div><label>${SV.t("label_sort_by")}</label><select id="aufSort">
+          <option value="termin" ${sortBy==="termin"?"selected":""}>${SV.t("opt_sort_termin")}</option>
+          <option value="team" ${sortBy==="team"?"selected":""}>${SV.t("opt_sort_team")}</option>
+          <option value="status" ${sortBy==="status"?"selected":""}>${SV.t("opt_sort_status")}</option>
+          <option value="verantwortlich" ${sortBy==="verantwortlich"?"selected":""}>${SV.t("opt_sort_verantwortlich")}</option>
+        </select></div>
+        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="aufHide" style="width:auto;" ${hideDone?"checked":""}> ${SV.t("label_hide_done")}</label></div>
+        <div style="flex:0;"><button type="submit">${SV.t("btn_apply")}</button></div>
+      </form>
+    </div>
+    <div class="card">${rows}</div>
+    <hr>
+    <form id="aufgaben-export-form" class="row" style="align-items:center; margin-top:8px;">
+      <div style="flex:0;"><label>${SV.t("label_pdf_format")}</label><select id="aufFormat"><option value="ausfuehrlich">${SV.t("opt_ausfuehrlich")}</option><option value="tabelle">${SV.t("opt_tabelle")}</option></select></div>
+      <div style="flex:0;"><label>${SV.t("label_orientation")}</label><select id="aufOrient"><option value="P">${SV.t("opt_portrait")}</option><option value="L">${SV.t("opt_landscape")}</option></select></div>
+      <div class="btn-row" style="align-self:center; margin-top:14px;">
+        <button type="button" onclick="SV.pdf.aufgabenlistePdf(SV.state._aufgabenExportData, SV.util.byId('aufFormat').value, SV.util.byId('aufOrient').value)">${SV.t("btn_export_pdf")}</button>
+      </div>
+    </form>
+  `;
+  SV.state._aufgabenSelectedTeams = selectedTeamIds;
+};
+
+SV.actions.toggleAufgabenTeam = function(teamId){
+  let sel = SV.state._aufgabenSelectedTeams || [];
+  sel = sel.includes(teamId) ? sel.filter(x=>x!==teamId) : sel.concat([teamId]);
+  location.hash = "#/aufgaben?teams="+sel.join(",");
+};
+SV.actions.unlockForAufgaben = async function(teamId){
+  const pw = SV.util.byId("ulpw-"+teamId).value;
+  const team = SV.state.teams.find(t=>t.id===teamId);
+  const ok = await SV.store.unlockWithPassword(team, pw);
+  if(!ok){ SV.ui.toast(SV.t("toast_wrong_password")); return; }
+  const sel = (SV.state._aufgabenSelectedTeams||[]).concat([teamId]);
+  location.hash = "#/aufgaben?teams="+sel.join(",");
+};
+SV.actions.applyAufgabenFilter = function(){
+  const q = encodeURIComponent(SV.util.byId("aufQ").value);
+  const bis = SV.util.byId("aufBis").value;
+  const sort = SV.util.byId("aufSort").value;
+  const hide = SV.util.byId("aufHide").checked ? "1":"0";
+  const teams = (SV.state._aufgabenSelectedTeams||[]).join(",");
+  location.hash = `#/aufgaben?q=${q}&bis=${bis}&sort=${sort}&hide=${hide}&teams=${teams}`;
+};
+
+/* ---------- Datensicherung (Export/Import) ---------- */
+SV.views.daten = async function(app){
+  app.innerHTML = `
+    <h1>${SV.t("daten_h1")}</h1>
+    <div class="card">
+      <h2>${SV.t("backup_h2")}</h2>
+      <p class="muted small">${SV.t("backup_desc")}</p>
+      <button onclick="SV.actions.exportAll()">${SV.t("btn_backup_file")}</button>
+    </div>
+    <div class="card">
+      <h2>${SV.t("restore_h2")}</h2>
+      <p class="muted small">${SV.t("restore_desc")}</p>
+      <input type="file" id="importFile" accept=".json,.meetingdb.json,.sitzung.json">
+      <button class="secondary" style="margin-top:8px;" onclick="SV.actions.importAll()">${SV.t("btn_load_file")}</button>
+    </div>
+  `;
+};
+SV.actions.exportAll = async function(){
+  const dump = await SV.store.exportAll();
+  const blob = new Blob([JSON.stringify(dump)], {type:"application/json"});
+  const stamp = SV.util.nowIso().slice(0,10);
+  SV.util.downloadBlob(blob, `meetingdb-${stamp}.meetingdb.json`);
+  SV.ui.toast(SV.t("toast_export_done"));
+};
+SV.actions.importAll = async function(){
+  const fileEl = SV.util.byId("importFile");
+  if(!fileEl.files.length){ SV.ui.toast(SV.t("toast_select_file_first")); return; }
+  const text = await fileEl.files[0].text();
+  let dump;
+  try{ dump = JSON.parse(text); }catch(e){ SV.ui.toast(SV.t("toast_invalid_json")); return; }
+  try{
+    const res = await SV.store.importAll(dump);
+    SV.ui.toast(SV.t("toast_import_done", res.added, res.updated, res.skipped));
+    SV.router.go();
+  }catch(e){ SV.ui.toast(SV.t("toast_import_failed", e.message)); }
+};
+
+/* ===================== PDF-Export (jsPDF) ===================== */
+SV.pdf = {
+  MARGIN: 18,
+
+  newDoc(orientation){
+    const doc = new window.jspdf.jsPDF({orientation: orientation==="L"?"l":"p", unit:"mm", format:"a4"});
+    doc.setFont("helvetica", "normal");
+    return doc;
+  },
+  newState(doc){
+    return { y: SV.pdf.MARGIN, doc, pageW: doc.internal.pageSize.getWidth(), pageH: doc.internal.pageSize.getHeight() };
+  },
+  usableWidth(state){ return state.pageW - 2*SV.pdf.MARGIN; },
+  ensure(state, needed){
+    if(state.y + needed > state.pageH - SV.pdf.MARGIN){
+      state.doc.addPage();
+      state.y = SV.pdf.MARGIN;
+    }
+  },
+  text(state, str, opts){
+    opts = opts || {};
+    const size = opts.size || 11;
+    const style = opts.bold ? "bold" : "normal";
+    const indent = opts.indent || 0;
+    state.doc.setFont("helvetica", style);
+    state.doc.setFontSize(size);
+    const maxW = SV.pdf.usableWidth(state) - indent;
+    const lines = state.doc.splitTextToSize(str, maxW);
+    const lh = (opts.lineHeight || (size*0.42));
+    SV.pdf.ensure(state, lines.length*lh + (opts.before||0));
+    state.y += (opts.before||0);
+    lines.forEach(line=>{
+      SV.pdf.ensure(state, lh);
+      state.doc.text(line, SV.pdf.MARGIN+indent, state.y);
+      state.y += lh;
+    });
+    state.y += (opts.after||0);
+  },
+  bulletLine(state, marker, str, indentMm, size){
+    size = size || 10.5;
+    const doc = state.doc;
+    doc.setFont("helvetica","normal"); doc.setFontSize(size);
+    const markerW = 6;
+    const maxW = SV.pdf.usableWidth(state) - indentMm - markerW;
+    const lines = doc.splitTextToSize(str, Math.max(maxW,20));
+    const lh = size*0.42;
+    lines.forEach((line,i)=>{
+      SV.pdf.ensure(state, lh);
+      if(i===0) doc.text(marker, SV.pdf.MARGIN+indentMm, state.y);
+      doc.text(line, SV.pdf.MARGIN+indentMm+markerW, state.y);
+      state.y += lh;
+    });
+  },
+  segments(state, content, indentBase){
+    indentBase = indentBase || 0;
+    const segs = SV.textformat.parseBlockSegments(content);
+    segs.forEach(seg=>{
+      if(seg.type==="text"){
+        const t = seg.text.replace(/^\n+|\n+$/g,"");
+        if(t.trim()==="") return;
+        t.split("\n").forEach(line=>{
+          if(line.trim()==="") { state.y += 2; return; }
+          SV.pdf.text(state, line, {indent:indentBase, size:10.5});
+        });
+      } else {
+        const marker = seg.depth===0 ? "•" : "–";
+        const indentMm = indentBase + (seg.depth===0 ? 2 : 8 + (seg.depth-1)*8);
+        seg.items.forEach(it=> SV.pdf.bulletLine(state, marker, it, indentMm));
+      }
+    });
+  },
+  header(state, title, subtitle){
+    SV.pdf.text(state, title, {size:16, bold:true});
+    if(subtitle) SV.pdf.text(state, subtitle, {size:10, after:4});
+    state.y += 2;
+  },
+  table(state, headers, rows, colWidths){
+    const doc = state.doc;
+    const pad = 1.5, lh = 4;
+    const cellLines = (txt, w)=>{
+      doc.setFontSize(8.5);
+      return doc.splitTextToSize(String(txt==null?"":txt), w-2*pad);
+    };
+    const drawRow = (cells, bold)=>{
+      const linesPerCell = cells.map((c,i)=>cellLines(c, colWidths[i]));
+      const maxLines = Math.max(...linesPerCell.map(l=>l.length), 1);
+      const rowH = maxLines*lh + 2*pad;
+      SV.pdf.ensure(state, rowH);
+      let x = SV.pdf.MARGIN;
+      doc.setFont("helvetica", bold?"bold":"normal");
+      cells.forEach((c,i)=>{
+        doc.rect(x, state.y, colWidths[i], rowH);
+        linesPerCell[i].forEach((line,li)=> doc.text(line, x+pad, state.y+pad+lh*0.75+li*lh));
+        x += colWidths[i];
+      });
+      state.y += rowH;
+    };
+    drawRow(headers, true);
+    rows.forEach(r=> drawRow(r, false));
+  },
+  save(doc, filename){ doc.save(filename); },
+
+  /* ---------- Anhänge in PDF-Exporten (echtes Zusammenfügen) ----------
+     Bilder werden ueber ein Canvas in JPEG umgewandelt und als normale
+     jsPDF-Seite eingefuegt (robust gegenueber Bild-Format/Browser).
+     PDF-Anhaenge koennen von jsPDF nicht eingebettet werden - dafuer wird
+     das fertige jsPDF-Dokument am Ende per pdf-lib geladen und die echten
+     Seiten der angehaengten PDF-Dateien werden dahinter kopiert (mit einer
+     Trennseite davor). Ein einzelner defekter/fehlender Anhang ueberspringt
+     sich selbst (try/catch), der Rest des Exports bleibt unversehrt. */
+  attachmentLabel(at){
+    if(at.caption && at.showFilename) return `${at.caption} (${at.filename})`;
+    if(at.caption) return at.caption;
+    return at.filename;
+  },
+  async imageBlobToJpeg(blob){
+    const url = URL.createObjectURL(blob);
+    try{
+      const img = await new Promise((resolve, reject)=>{
+        const im = new Image();
+        im.onload = ()=>resolve(im);
+        im.onerror = ()=>reject(new Error(SV.t("img_load_error")));
+        im.src = url;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,canvas.width,canvas.height); // falls Transparenz (PNG)
+      ctx.drawImage(img, 0, 0);
+      return { dataUrl: canvas.toDataURL("image/jpeg", 0.92), width: canvas.width, height: canvas.height };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  },
+  async addImagePage(doc, blob, label){
+    const {dataUrl, width, height} = await SV.pdf.imageBlobToJpeg(blob);
+    doc.addPage();
+    const state = SV.pdf.newState(doc);
+    SV.pdf.text(state, label, {bold:true, size:11, after:3});
+    const maxW = state.pageW - 2*SV.pdf.MARGIN;
+    const maxH = state.pageH - state.y - SV.pdf.MARGIN;
+    const scale = Math.min(maxW/width, maxH/height, 1);
+    doc.addImage(dataUrl, "JPEG", SV.pdf.MARGIN, state.y, width*scale, height*scale);
+  },
+  // Verarbeitet eine Liste gesammelter Anhang-Referenzen ({label, attachmentId, kind})
+  // in Reihenfolge: Bilder als zusaetzliche jsPDF-Seiten, PDFs am Ende per
+  // pdf-lib echt zusammengefuegt. Gibt die fertigen PDF-Bytes zurueck.
+  async appendAttachments(doc, teamId, refs){
+    const pdfRefs = [];
+    for(const ref of refs){
+      if(ref.kind !== "bild") continue;
+      try{
+        const blob = await SV.store.getAttachmentBlob(teamId, ref.attachmentId);
+        if(!blob) throw new Error(SV.t("toast_attachment_not_found"));
+        await SV.pdf.addImagePage(doc, blob, ref.label);
+      }catch(e){
+        doc.addPage();
+        const s = SV.pdf.newState(doc);
+        SV.pdf.text(s, SV.t("pdf_insert_failed", ref.label), {bold:true});
+      }
+    }
+    for(const ref of refs){ if(ref.kind === "pdf") pdfRefs.push(ref); }
+    const jspdfBytes = doc.output("arraybuffer");
+    if(!pdfRefs.length || !window.PDFLib) return jspdfBytes;
+    const merged = await window.PDFLib.PDFDocument.load(jspdfBytes);
+    const pages = merged.getPages();
+    const refSize = pages.length ? pages[0].getSize() : {width:595.28, height:841.89};
+    const font = await merged.embedFont(window.PDFLib.StandardFonts.HelveticaBold);
+    const marginPt = SV.pdf.MARGIN * 2.8346;
+    for(const ref of pdfRefs){
+      try{
+        const blob = await SV.store.getAttachmentBlob(teamId, ref.attachmentId);
+        if(!blob) throw new Error(SV.t("toast_attachment_not_found"));
+        const srcBytes = await blob.arrayBuffer();
+        const sep = merged.addPage([refSize.width, refSize.height]);
+        sep.drawText(ref.label, { x: marginPt, y: refSize.height - marginPt - 10, size: 13, font });
+        const srcDoc = await window.PDFLib.PDFDocument.load(srcBytes);
+        const copied = await merged.copyPages(srcDoc, srcDoc.getPageIndices());
+        copied.forEach(p=>merged.addPage(p));
+      }catch(e){
+        const sep = merged.addPage([refSize.width, refSize.height]);
+        sep.drawText(SV.t("pdf_insert_failed", ref.label), { x: marginPt, y: refSize.height - marginPt - 10, size: 11, font });
+      }
+    }
+    return merged.save();
+  },
+  downloadPdfBytes(bytes, filename){
+    SV.util.downloadBlob(new Blob([bytes], {type:"application/pdf"}), filename);
+  },
+
+  async agendaPdf(agendaId){
+    const teamId = SV.state.currentTeamId;
+    const agenda = await SV.store.getAgenda(teamId, agendaId);
+    const doc = SV.pdf.newDoc("P");
+    const state = SV.pdf.newState(doc);
+    SV.pdf.header(state, SV.t("pdf_agenda_title", agenda.title||SV.t("no_title")), agenda.date?SV.t("pdf_date_label", SV.util.dmy(agenda.date)):"");
+    const attachmentRefs = [];
+    SV.model.numberedItems(agenda.items).forEach(({item,number,depth})=>{
+      SV.pdf.text(state, `${number}. ${item.title}${item.public?"":SV.t("pdf_not_public_suffix")}`, {bold:true, indent: depth*6, before:3});
+      item.blocks.forEach(b=> SV.pdf.segments(state, b.content, depth*6+4));
+      (item.anhaenge||[]).filter(at=>at.display!=="verborgen").forEach(at=>{
+        const n = attachmentRefs.length+1;
+        const label = SV.t("pdf_attachment_label_n", n, SV.pdf.attachmentLabel(at));
+        attachmentRefs.push({label, attachmentId:at.id, kind:at.kind});
+        SV.pdf.text(state, SV.t("pdf_see_attachment", n, SV.pdf.attachmentLabel(at)), {indent:depth*6+4, size:9.5, after:2});
+      });
+    });
+    const bytes = await SV.pdf.appendAttachments(doc, teamId, attachmentRefs);
+    SV.pdf.downloadPdfBytes(bytes, SV.t("pdf_filename_agenda", agenda.date||SV.t("pdf_filename_no_date")));
+  },
+
+  async protocolPdf(meetingId, full){
+    const teamId = SV.state.currentTeamId;
+    const meeting = await SV.store.getMeeting(teamId, meetingId);
+    const doc = SV.pdf.newDoc("P");
+    const state = SV.pdf.newState(doc);
+    SV.pdf.header(state, SV.t("pdf_protocol_title", meeting.title||SV.t("no_title")),
+      (meeting.date?SV.t("pdf_date_label", SV.util.dmy(meeting.date)):"") + (full?SV.t("pdf_full_version"):SV.t("pdf_public_version")));
+    const attachmentRefs = [];
+    SV.model.numberedItems(meeting.items).forEach(({item,number,depth})=>{
+      if(!full && !item.public) return;
+      SV.pdf.text(state, `${number}. ${item.title}`, {bold:true, size:12.5, indent:depth*6, before:4});
+      item.blocks.forEach(b=> SV.pdf.segments(state, b.content, depth*6+4));
+      item.antraege.forEach(a=>{
+        SV.pdf.text(state, SV.t("pdf_antrag_label"), {bold:true, indent:depth*6+4, before:2});
+        SV.pdf.segments(state, a.antrag_text, depth*6+4);
+        SV.pdf.text(state, SV.t("pdf_beschluss_label"), {bold:true, indent:depth*6+4, before:2});
+        SV.pdf.segments(state, a.beschluss_text, depth*6+4);
+        SV.pdf.text(state, SV.t("pdf_ergebnis_line", SV.beschluss.label(a.ergebnis), a.dafuer, a.dagegen, a.enthaltung), {indent:depth*6+4, size:9.5, after:2});
+      });
+      item.aufgaben.forEach(t=>{
+        SV.pdf.text(state, SV.t("pdf_aufgabe_label"), {bold:true, indent:depth*6+4, before:2});
+        SV.pdf.segments(state, t.text, depth*6+4);
+        SV.pdf.text(state, SV.t("pdf_aufgabe_line", t.verantwortlich, SV.util.dmy(t.termin), SV.aufgaben.statusLabel(t.status)), {indent:depth*6+4, size:9.5, after:2});
+      });
+      (item.anhaenge||[]).filter(at=>at.display!=="verborgen").forEach(at=>{
+        const n = attachmentRefs.length+1;
+        const label = SV.t("pdf_attachment_label_n", n, SV.pdf.attachmentLabel(at));
+        attachmentRefs.push({label, attachmentId:at.id, kind:at.kind});
+        SV.pdf.text(state, SV.t("pdf_see_attachment", n, SV.pdf.attachmentLabel(at)), {indent:depth*6+4, size:9.5, after:2});
+      });
+    });
+    const bytes = await SV.pdf.appendAttachments(doc, teamId, attachmentRefs);
+    SV.pdf.downloadPdfBytes(bytes, SV.t("pdf_filename_protocol", meeting.date||SV.t("pdf_filename_no_date"), full?"":SV.t("pdf_filename_public_suffix")));
+  },
+
+  beschlusslistePdf(entries, format){
+    const doc = SV.pdf.newDoc("P");
+    const state = SV.pdf.newState(doc);
+    SV.pdf.header(state, SV.t("pdf_beschlussliste_title"));
+    if(format==="tabelle"){
+      const w = SV.pdf.usableWidth(state);
+      const colWidths = [22, 36, 48, 48, 20];
+      SV.pdf.table(state, [SV.t("pdf_col_date"),SV.t("pdf_col_top"),SV.t("pdf_col_antrag"),SV.t("pdf_col_beschluss"),SV.t("pdf_col_ergebnis")], entries.map(({a,meeting,item})=>[
+        meeting.date?SV.util.dmy(meeting.date):"", item.title||"", a.antrag_text||"", a.beschluss_text||"", SV.beschluss.label(a.ergebnis)||"",
+      ]), colWidths);
+    } else {
+      entries.forEach(({a,meeting,item})=>{
+        SV.pdf.text(state, `${meeting.date?SV.util.dmy(meeting.date):SV.t("no_date")} — ${meeting.title} · ${item.title}`, {bold:true, before:4});
+        SV.pdf.text(state, SV.t("pdf_antrag_label"), {bold:true});
+        SV.pdf.segments(state, a.antrag_text, 4);
+        SV.pdf.text(state, SV.t("pdf_beschluss_label"), {bold:true});
+        SV.pdf.segments(state, a.beschluss_text, 4);
+        SV.pdf.text(state, SV.t("pdf_ergebnis_line", SV.beschluss.label(a.ergebnis), a.dafuer, a.dagegen, a.enthaltung), {size:9.5, after:2});
+      });
+    }
+    SV.pdf.save(doc, SV.t("pdf_filename_beschlussliste"));
+  },
+
+  aufgabenlistePdf(entries, format, orientation){
+    const doc = SV.pdf.newDoc(orientation);
+    const state = SV.pdf.newState(doc);
+    SV.pdf.header(state, SV.t("pdf_aufgabenliste_title"));
+    if(format==="tabelle"){
+      const colWidths = orientation==="L" ? [26,34,32,80,40,30,25] : [18,24,22,46,30,22,18];
+      SV.pdf.table(state, [SV.t("pdf_col_team"),SV.t("pdf_col_date"),SV.t("pdf_col_top"),SV.t("pdf_col_aufgabe"),SV.t("pdf_col_verantwortlich"),SV.t("pdf_col_termin"),SV.t("pdf_col_status")], entries.map(e=>[
+        e.teamName, e.containerDate?SV.util.dmy(e.containerDate):"", e.containerTitle||"", e.task.text, e.task.verantwortlich,
+        SV.util.dmy(e.task.termin), SV.aufgaben.statusLabel(e.task.status),
+      ]), colWidths);
+    } else {
+      entries.forEach(e=>{
+        SV.pdf.text(state, `${e.teamName} — ${e.containerTitle||""}`, {bold:true, before:4});
+        SV.pdf.segments(state, e.task.text, 4);
+        SV.pdf.text(state, SV.t("pdf_aufgabe_line", e.task.verantwortlich, SV.util.dmy(e.task.termin), SV.aufgaben.statusLabel(e.task.status)), {size:9.5, indent:4, after:2});
+      });
+    }
+    SV.pdf.save(doc, SV.t("pdf_filename_aufgabenliste"));
+  },
+};
+
+/* ===================== Altprotokoll-Import (Phase 3) =====================
+   Liest .docx/.odt/.pdf/.xlsx-Dateien rein clientseitig (kein Server) und
+   wandelt sie in eine gemeinsame Zwischenform um: eine flache Liste von
+   Textzeilen in Dokumentreihenfolge (Tabellenzeilen werden zu einer Zeile
+   "Zelle | Zelle | ...", damit nichts an Struktur verloren geht, aber alles
+   als einfacher Text weiterverarbeitet werden kann). Darauf setzen die
+   Erkennungs-Heuristiken (TOPs/Beschlüsse/Aufgaben) auf - siehe weiter unten. */
+SV.importer = {
+  async loadZipXml(file, xmlPath){
+    const zip = await window.JSZip.loadAsync(file);
+    const entry = zip.file(xmlPath);
+    if(!entry) throw new Error(SV.t("err_xml_not_found", xmlPath));
+    const xmlText = await entry.async("string");
+    return new DOMParser().parseFromString(xmlText, "application/xml");
+  },
+  async parseDocx(file){
+    const doc = await SV.importer.loadZipXml(file, "word/document.xml");
+    const body = doc.getElementsByTagName("w:body")[0];
+    if(!body) throw new Error(SV.t("err_docx_no_body"));
+    const lines = [];
+    const walk = (node)=>{
+      for(const child of Array.from(node.children||[])){
+        const tag = child.tagName;
+        if(tag === "w:tr"){
+          const cells = Array.from(child.getElementsByTagName("w:tc")).map(c=>(c.textContent||"").trim());
+          lines.push(cells.join(" | "));
+        } else if(tag === "w:p"){
+          lines.push((child.textContent||"").trim());
+        } else if(child.getElementsByTagName("w:p").length || child.getElementsByTagName("w:tr").length){
+          walk(child); // z.B. w:tbl - Zeilen/Absaetze liegen eine Ebene tiefer
+        }
+      }
+    };
+    walk(body);
+    return lines;
+  },
+  async parseOdt(file){
+    const doc = await SV.importer.loadZipXml(file, "content.xml");
+    const body = doc.getElementsByTagName("office:text")[0];
+    if(!body) throw new Error(SV.t("err_odt_no_body"));
+    const lines = [];
+    const walk = (node)=>{
+      for(const child of Array.from(node.children||[])){
+        const tag = child.tagName;
+        if(tag === "table:table-row"){
+          const cells = Array.from(child.getElementsByTagName("table:table-cell")).map(c=>(c.textContent||"").trim());
+          lines.push(cells.join(" | "));
+        } else if(tag === "text:p" || tag === "text:h"){
+          lines.push((child.textContent||"").trim());
+        } else if(child.getElementsByTagName("text:p").length || child.getElementsByTagName("text:h").length || child.getElementsByTagName("table:table-row").length){
+          walk(child);
+        }
+      }
+    };
+    walk(body);
+    return lines;
+  },
+  async parsePdf(file){
+    const buf = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({data: buf}).promise;
+    const lines = [];
+    const flushLine = (raw)=>{
+      const t = raw.replace(/\s+/g, " ").trim();
+      if(t) lines.push(t);
+    };
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      let lastY = null, line = "";
+      for(const item of content.items){
+        const y = item.transform[5];
+        if(lastY !== null && Math.abs(y - lastY) > 2){
+          flushLine(line);
+          line = "";
+        }
+        line += (line ? " " : "") + item.str;
+        lastY = y;
+      }
+      flushLine(line);
+      lines.push(""); // Leerzeile als Seitenumbruch-Markierung
+    }
+    return lines;
+  },
+  async parseXlsx(file){
+    const zip = await window.JSZip.loadAsync(file);
+    // Gemeinsame Zeichenketten (sharedStrings.xml) - optional, manche xlsx
+    // schreiben Zellwerte auch inline.
+    let shared = [];
+    const sharedEntry = zip.file("xl/sharedStrings.xml");
+    if(sharedEntry){
+      const sdoc = new DOMParser().parseFromString(await sharedEntry.async("string"), "application/xml");
+      shared = Array.from(sdoc.getElementsByTagName("si")).map(si=>(si.textContent||"").trim());
+    }
+    const sheetNames = zip.file(/xl\/worksheets\/sheet\d+\.xml/).map(f=>f.name).sort();
+    if(!sheetNames.length) throw new Error(SV.t("err_no_sheets"));
+    const lines = [];
+    for(const name of sheetNames){
+      const sdoc = new DOMParser().parseFromString(await zip.file(name).async("string"), "application/xml");
+      for(const row of Array.from(sdoc.getElementsByTagName("row"))){
+        const cells = Array.from(row.getElementsByTagName("c")).map(c=>{
+          const t = c.getAttribute("t");
+          const vEl = c.getElementsByTagName("v")[0];
+          const v = vEl ? vEl.textContent : "";
+          if(t === "s") return shared[+v] || "";
+          if(t === "inlineStr"){ const isEl = c.getElementsByTagName("t")[0]; return isEl ? (isEl.textContent||"") : ""; }
+          return v;
+        });
+        lines.push(cells.join(" | "));
+      }
+      lines.push(""); // Blatt-Ende als Leerzeile
+    }
+    return lines;
+  },
+  // Einstiegspunkt: anhand der Dateiendung den passenden Parser waehlen.
+  async parseFile(file){
+    const ext = (file.name.split(".").pop()||"").toLowerCase();
+    if(ext === "docx") return SV.importer.parseDocx(file);
+    if(ext === "odt") return SV.importer.parseOdt(file);
+    if(ext === "pdf") return SV.importer.parsePdf(file);
+    if(ext === "xlsx") return SV.importer.parseXlsx(file);
+    throw new Error(SV.t("err_unsupported_fileformat"));
+  },
+
+  /* ---------- Heuristische Erkennung (bewusst grosszuegig: lieber zu viel
+     als zu wenig in den Vorschlag aufnehmen - der Review-Schritt vor dem
+     Speichern laesst Falsches verwerfen; ein ganz verpasster Beschluss waere
+     schlimmer, siehe Nutzerwunsch "wichtig, dass Beschlüsse gerettet werden"). */
+  TOP_HEADING_RE: /^(?:tagesordnungspunkt|top|punkt)\s*\d+\b[:.)]?\s*(.*)$/i,
+  NUMBERED_HEADING_RE: /^(\d{1,2})[.)]\s+(\S.*)$/,
+
+  // Teilt die flache Zeilenliste eines Dokuments in TOP-Kandidaten. Alles vor
+  // der ersten erkannten Ueberschrift (z.B. Anwesenheitsliste) landet in einem
+  // ersten Sammel-Segment "Allgemein", damit nichts verloren geht.
+  segmentIntoTops(lines){
+    const segments = [];
+    let current = { title: SV.t("seg_default_title"), lines: [] };
+    const pushCurrent = ()=>{ if(current.lines.some(l=>l.trim())) segments.push(current); };
+    for(const raw of lines){
+      const trimmed = raw.trim();
+      let title = null;
+      let m = SV.importer.TOP_HEADING_RE.exec(trimmed);
+      if(m){
+        title = m[1].trim() || trimmed;
+      } else {
+        m = SV.importer.NUMBERED_HEADING_RE.exec(trimmed);
+        // Nur als Ueberschrift werten, wenn kurz und ohne mehrere Satzzeichen
+        // (sonst waere es vermutlich eine normale Aufzaehlung im Fliesstext).
+        if(m && trimmed.length <= 70 && !/[.;:]\s*\S.*[.;:]\s*\S/.test(trimmed)){
+          title = m[2].trim();
+        }
+      }
+      if(title !== null){
+        pushCurrent();
+        current = { title, lines: [] };
+      } else {
+        current.lines.push(raw);
+      }
+    }
+    pushCurrent();
+    return segments;
+  },
+
+  VOTE_RE: /daf[uü]r\s*[:=]?\s*(\d+)[^\d]{0,15}dagegen\s*[:=]?\s*(\d+)(?:[^\d]{0,20}enthaltung(?:en)?\s*[:=]?\s*(\d+))?/i,
+  ERGEBNIS_PATTERNS: [
+    [/einstimmig/i, "angenommen"],
+    [/mehrheitlich/i, "angenommen"],
+    [/angenommen/i, "angenommen"],
+    [/abgelehnt/i, "abgelehnt"],
+    [/vertagt/i, "vertagt"],
+    [/zur[uü]ckgezogen/i, "zurückgezogen"],
+  ],
+  guessErgebnis(text){
+    for(const [re, val] of SV.importer.ERGEBNIS_PATTERNS) if(re.test(text)) return val;
+    return "offen";
+  },
+  normalizeDate(d){
+    const m = /^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/.exec((d||"").trim());
+    if(!m) return "";
+    let [, dd, mm, yyyy] = m;
+    if(yyyy.length === 2) yyyy = "20"+yyyy;
+    return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+  },
+
+  // Sucht in den Zeilen EINES TOP-Segments nach Antrag/Beschluss-Hinweisen.
+  // "hoch" = explizit beschriftete "Antrag:"/"Beschluss:"-Zeile gefunden;
+  // "niedrig" = nur Signalwoerter ohne Beschriftung (muss im Review bestaetigt
+  // oder von Hand nachgebessert werden).
+  findBeschluesse(lines){
+    const text = lines.join(" ");
+    let antragText = null, beschlussText = null, voteLine = "";
+    for(const line of lines){
+      const trimmed = line.trim();
+      const am = /^antrag\s*[:\-]\s*(.*)$/i.exec(trimmed);
+      if(am){ antragText = am[1].trim(); continue; }
+      const bm = /^beschluss\s*[:\-]\s*(.*)$/i.exec(trimmed);
+      if(bm){ beschlussText = bm[1].trim(); continue; }
+      if(/daf[uü]r|dagegen|enthaltung|abstimmung/i.test(trimmed)) voteLine += " " + trimmed;
+    }
+    if(antragText || beschlussText){
+      const vm = SV.importer.VOTE_RE.exec(voteLine) || SV.importer.VOTE_RE.exec(text);
+      return [{
+        antrag_text: antragText || "",
+        beschluss_text: beschlussText || "",
+        ergebnis: SV.importer.guessErgebnis(voteLine || text),
+        dafuer: vm ? (+vm[1]||0) : 0,
+        dagegen: vm ? (+vm[2]||0) : 0,
+        enthaltung: (vm && vm[3]) ? (+vm[3]||0) : 0,
+        confidence: "hoch",
+        quelle: lines.join("\n"),
+      }];
+    }
+    if(/beschluss|beschlossen|\bantrag\b/i.test(text)){
+      const vm = SV.importer.VOTE_RE.exec(text);
+      return [{
+        antrag_text: text.slice(0, 500),
+        beschluss_text: "",
+        ergebnis: SV.importer.guessErgebnis(text),
+        dafuer: vm ? (+vm[1]||0) : 0,
+        dagegen: vm ? (+vm[2]||0) : 0,
+        enthaltung: (vm && vm[3]) ? (+vm[3]||0) : 0,
+        confidence: "niedrig",
+        quelle: lines.join("\n"),
+      }];
+    }
+    return [];
+  },
+
+  // Sucht Aufgaben-Hinweise (Zusatz, geringere Priorität als Beschlüsse).
+  findAufgaben(lines){
+    const out = [];
+    const text = lines.join(" ");
+    const vm = /verantwortlich\s*[:\-]?\s*([^,·\n]+)/i.exec(text);
+    const tm = /termin\s*[:\-]?\s*(\d{1,2}\.\d{1,2}\.\d{2,4})/i.exec(text)
+      || /\bbis\s+(?:zum\s+)?(\d{1,2}\.\d{1,2}\.\d{2,4})/i.exec(text);
+    for(const line of lines){
+      const am = /^aufgabe\s*[:\-]\s*(.*)$/i.exec(line.trim());
+      if(am){
+        out.push({
+          text: am[1].trim(),
+          verantwortlich: vm ? vm[1].trim() : "",
+          termin: tm ? SV.importer.normalizeDate(tm[1]) : "",
+          confidence: "hoch",
+        });
+      }
+    }
+    return out;
+  },
+};
+
+/* ---------- Import-Vorschau/Review-UI (vor dem Speichern) ----------
+   Der Entwurf liegt nur im Arbeitsspeicher (SV.state._importDraft), bis
+   "Import abschließen" gedrückt wird - nichts wird vorher in IndexedDB
+   geschrieben. */
+SV.views.importStart = function(app){
+  app.innerHTML = `
+    <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
+    <h1>${SV.t("import_start_h1")}</h1>
+    <div class="card">
+      <p class="muted small">${SV.t("import_start_desc")}</p>
+      <div class="row">
+        <div><label>${SV.t("label_file")}</label><input type="file" id="importFile" accept=".docx,.odt,.pdf,.xlsx"></div>
+        <div><label>${SV.t("label_meeting_title")}</label><input type="text" id="importTitle" placeholder="${SV.t("placeholder_import_title")}"></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="importDate"></div>
+      </div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button onclick="SV.actions.importFile()">${SV.t("btn_read_file")}</button>
+      </div>
+      <div id="importStatus" class="small muted" style="margin-top:6px;"></div>
+    </div>
+  `;
+};
+
+SV.actions.importFile = async function(){
+  const fileInput = SV.util.byId("importFile");
+  const file = fileInput.files && fileInput.files[0];
+  const statusEl = SV.util.byId("importStatus");
+  if(!file){ SV.ui.toast(SV.t("toast_select_file")); return; }
+  statusEl.textContent = SV.t("status_reading_file");
+  try{
+    const lines = await SV.importer.parseFile(file);
+    const segments = SV.importer.segmentIntoTops(lines).map(seg=>{
+      const beschluesse = SV.importer.findBeschluesse(seg.lines).map(b=>Object.assign({use: b.confidence==="hoch"}, b));
+      const aufgaben = SV.importer.findAufgaben(seg.lines).map(a=>Object.assign({use: true}, a));
+      return { title: seg.title, text: seg.lines.join("\n"), keep: true, beschluesse, aufgaben };
+    });
+    if(!segments.length){ statusEl.textContent = SV.t("status_no_usable_text"); return; }
+    const title = SV.util.byId("importTitle").value.trim() || file.name.replace(/\.[^.]+$/, "");
+    const date = SV.util.byId("importDate").value || "";
+    SV.state._importDraft = { title, date, sourceName: file.name, segments };
+    location.hash = "#/import/review";
+  }catch(e){
+    statusEl.textContent = SV.t("status_read_error", e.message);
+  }
+};
+
+SV.views.importReview = function(app){
+  const draft = SV.state._importDraft;
+  if(!draft){ location.hash = "#/import"; return; }
+  const ergOptions = (selected)=> SV.beschluss.ERG.map(e=>`<option value="${e.value}" ${e.value===selected?"selected":""}>${SV.beschluss.label(e.value)}</option>`).join("");
+  const segHtml = draft.segments.map((seg,i)=>{
+    const bHtml = seg.beschluesse.map((b,j)=>`
+      <div class="list-item" style="border-left:3px solid var(--blue);">
+        <label style="display:inline;"><input type="checkbox" id="imp-b-use-${i}-${j}" ${b.use?"checked":""} style="width:auto;">
+          ${SV.t("label_use_as_beschluss")}</label>
+        ${b.confidence==="niedrig"?`<span class="tag">${SV.t("tag_uncertain")}</span>`:''}
+        <label>${SV.t("label_antrag")}</label><textarea id="imp-b-antrag-${i}-${j}">${SV.util.esc(b.antrag_text)}</textarea>
+        <label>${SV.t("label_beschluss")}</label><textarea id="imp-b-beschluss-${i}-${j}">${SV.util.esc(b.beschluss_text)}</textarea>
+        <div class="row" style="margin-top:4px;">
+          <div><label>${SV.t("label_ergebnis")}</label><select id="imp-b-ergebnis-${i}-${j}">${ergOptions(b.ergebnis)}</select></div>
+          <div><label>${SV.t("label_dafuer")}</label><input type="number" min="0" id="imp-b-dafuer-${i}-${j}" value="${b.dafuer}"></div>
+          <div><label>${SV.t("label_dagegen")}</label><input type="number" min="0" id="imp-b-dagegen-${i}-${j}" value="${b.dagegen}"></div>
+          <div><label>${SV.t("label_enthaltung")}</label><input type="number" min="0" id="imp-b-enth-${i}-${j}" value="${b.enthaltung}"></div>
+        </div>
+      </div>`).join("");
+    const aHtml = seg.aufgaben.map((a,k)=>`
+      <div class="list-item" style="border-left:3px solid var(--blue);">
+        <label style="display:inline;"><input type="checkbox" id="imp-a-use-${i}-${k}" ${a.use?"checked":""} style="width:auto;"> ${SV.t("label_use_as_aufgabe")}</label>
+        <label>${SV.t("label_task")}</label><textarea id="imp-a-text-${i}-${k}">${SV.util.esc(a.text)}</textarea>
+        <div class="row" style="margin-top:4px;">
+          <div><label>${SV.t("label_responsible")}</label><input type="text" id="imp-a-ver-${i}-${k}" value="${SV.util.esc(a.verantwortlich)}"></div>
+          <div><label>${SV.t("label_due")}</label><input type="date" id="imp-a-ter-${i}-${k}" value="${SV.util.esc(a.termin)}"></div>
+        </div>
+      </div>`).join("");
+    return `
+      <div class="card">
+        <label style="display:inline;"><input type="checkbox" id="imp-seg-keep-${i}" ${seg.keep?"checked":""} style="width:auto;"> ${SV.t("label_keep_item")}</label>
+        <div style="margin-top:4px;"><label>${SV.t("label_title")}</label><input type="text" id="imp-seg-title-${i}" value="${SV.util.esc(seg.title)}"></div>
+        <label>${SV.t("label_full_text")}</label>
+        <textarea id="imp-seg-text-${i}" style="min-height:90px;">${SV.util.esc(seg.text)}</textarea>
+        ${bHtml ? `<h3 class="small">${SV.t("heading_detected_beschluesse")}</h3>${bHtml}` : ""}
+        ${aHtml ? `<h3 class="small">${SV.t("heading_detected_aufgaben")}</h3>${aHtml}` : ""}
+      </div>`;
+  }).join("");
+
+  app.innerHTML = `
+    <p><a href="#/import">${SV.t("back_generic")}</a></p>
+    <h1>${SV.t("import_review_title", SV.util.esc(draft.sourceName))}</h1>
+    <div class="card">
+      <p class="muted small">${SV.t("import_review_hint")}</p>
+      <div class="row">
+        <div><label>${SV.t("label_meeting_title")}</label><input type="text" id="imp-title" value="${SV.util.esc(draft.title)}"></div>
+        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="imp-date" value="${SV.util.esc(draft.date)}"></div>
+      </div>
+    </div>
+    ${segHtml}
+    <div class="btn-row">
+      <button onclick="SV.actions.importCommit()">${SV.t("btn_import_commit")}</button>
+      <button class="secondary" onclick="SV.actions.importCancel()">${SV.t("btn_cancel")}</button>
+    </div>
+  `;
+  SV.util.installAutoGrow(app);
+};
+
+SV.actions.importCommit = async function(){
+  const draft = SV.state._importDraft;
+  if(!draft) return;
+  const teamId = SV.state.currentTeamId;
+  const title = SV.util.byId("imp-title").value.trim() || draft.title;
+  const date = SV.util.byId("imp-date").value || draft.date || "";
+  const meeting = SV.model.newMeeting(date, title, null);
+  meeting.status = "abgeschlossen";
+  meeting.completed_at = SV.util.nowIso();
+  let order = 0;
+  draft.segments.forEach((seg,i)=>{
+    const keep = SV.util.byId(`imp-seg-keep-${i}`).checked;
+    if(!keep) return;
+    const segTitle = SV.util.byId(`imp-seg-title-${i}`).value.trim() || seg.title;
+    const segText = SV.util.byId(`imp-seg-text-${i}`).value;
+    const item = SV.model.newMeetingItem(segTitle, {order: order++});
+    if(segText.trim()) item.blocks.push(SV.model.newBlock(segText));
+    seg.beschluesse.forEach((b,j)=>{
+      if(!SV.util.byId(`imp-b-use-${i}-${j}`).checked) return;
+      item.antraege.push(SV.model.newAntrag({
+        antrag_text: SV.util.byId(`imp-b-antrag-${i}-${j}`).value,
+        beschluss_text: SV.util.byId(`imp-b-beschluss-${i}-${j}`).value,
+        ergebnis: SV.util.byId(`imp-b-ergebnis-${i}-${j}`).value,
+        dafuer: +SV.util.byId(`imp-b-dafuer-${i}-${j}`).value || 0,
+        dagegen: +SV.util.byId(`imp-b-dagegen-${i}-${j}`).value || 0,
+        enthaltung: +SV.util.byId(`imp-b-enth-${i}-${j}`).value || 0,
+      }));
+    });
+    seg.aufgaben.forEach((a,k)=>{
+      if(!SV.util.byId(`imp-a-use-${i}-${k}`).checked) return;
+      const text = SV.util.byId(`imp-a-text-${i}-${k}`).value.trim();
+      if(!text) return;
+      const ver = SV.util.byId(`imp-a-ver-${i}-${k}`).value.trim();
+      const ter = SV.util.byId(`imp-a-ter-${i}-${k}`).value;
+      item.aufgaben.push(SV.model.newTask(text, ver, ter));
+    });
+    meeting.items.push(item);
+  });
+  if(!meeting.items.length){ SV.ui.toast(SV.t("toast_need_one_item")); return; }
+  await SV.store.saveMeeting(teamId, meeting);
+  SV.state._importDraft = null;
+  location.hash = "#/meetings/"+meeting.id;
+};
+SV.actions.importCancel = function(){
+  SV.state._importDraft = null;
+  location.hash = "#/meetings";
+};
+
+/* ===================== Hilfe ===================== */
+// Beschriftungen/Inhalte kommen live aus SV.i18n.DICT (SV.t), damit die
+// Hilfe beim Sprachwechsel ohne Dopplung mitübersetzt wird.
+SV.help = {
+  TAB_KEYS: ["bedienung", "installation", "datenschutz", "ueber"],
+  labelKey: {bedienung:"help_tab_bedienung", installation:"help_tab_installation", datenschutz:"help_tab_datenschutz", ueber:"help_tab_ueber"},
+  htmlKey: {bedienung:"help_html_bedienung", installation:"help_html_installation", datenschutz:"help_html_datenschutz", ueber:"help_html_ueber"},
+  activeTab: "bedienung",
+};
+SV.ui.openHelp = function(){
+  const tabsEl = SV.util.byId("helpTabs");
+  tabsEl.innerHTML = SV.help.TAB_KEYS.map(k=>
+    `<button class="${SV.help.activeTab===k?'active':''}" onclick="SV.ui.showHelpTab('${k}')">${SV.t(SV.help.labelKey[k])}</button>`
+  ).join("");
+  SV.ui.showHelpTab(SV.help.activeTab);
+  SV.util.byId("helpdlg").showModal();
+};
+SV.ui.showHelpTab = function(k){
+  SV.help.activeTab = k;
+  SV.util.byId("helpBody").innerHTML = SV.t(SV.help.htmlKey[k]);
+  SV.util.qsa("#helpTabs button").forEach(b=>b.classList.remove("active"));
+  const idx = SV.help.TAB_KEYS.indexOf(k);
+  const btn = SV.util.qsa("#helpTabs button")[idx];
+  if(btn) btn.classList.add("active");
+};
+
+/* ===================== App-Start / Service Worker ===================== */
+SV.app = {
+  swReg: null,
+  async applyUpdate(){
+    if(SV.app.swReg && SV.app.swReg.waiting){
+      SV.app.swReg.waiting.postMessage("skipWaiting");
+    }
+    window.location.reload();
+  },
+  async registerSW(){
+    if(!("serviceWorker" in navigator)) return;
+    try{
+      const reg = await navigator.serviceWorker.register("sw.js", {updateViaCache:"none"});
+      SV.app.swReg = reg;
+      reg.addEventListener("updatefound", ()=>{
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener("statechange", ()=>{
+          if(nw.state === "installed" && navigator.serviceWorker.controller){
+            SV.util.byId("updatebar").style.display = "block";
+          }
+        });
+      });
+      document.addEventListener("visibilitychange", ()=>{
+        if(document.visibilityState === "visible") reg.update().catch(()=>{});
+      });
+    }catch(e){ console.warn("SW-Registrierung fehlgeschlagen", e); }
+  },
+  init(){
+    SV.i18n.init();
+    SV.app.registerSW();
+    SV.router.go();
+  },
+};
+document.addEventListener("DOMContentLoaded", SV.app.init);
+</script>
+</body>
+</html>
