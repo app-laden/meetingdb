@@ -101,7 +101,7 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
    #topbar + nav#tabs ermittelt (SV.ui.renderTabs), 92px ist nur ein
    Startwert, bevor das zum ersten Mal berechnet wurde. */
 .meeting-split{display:flex; gap:14px; align-items:flex-start; margin-top:14px;}
-.split-left{flex:0 0 280px; min-width:220px; max-width:320px;}
+.split-left{flex:0 0 340px; min-width:260px; max-width:400px;}
 .split-right{flex:1 1 auto; min-width:0;}
 .split-left, .split-right{position:sticky; top:var(--split-top, 92px);
   max-height:calc(100vh - var(--split-top, 92px) - 14px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
@@ -114,17 +114,28 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 /* Eigene, schmale Flex-Zeile statt der allgemeinen ".row"-Klasse (deren
    ".row > *{min-width:140px}" fuer Formularfelder gedacht ist und die
    kompakte TOP-Zeile sonst sprengen wuerde). */
-.top-row-head{display:flex; align-items:center; flex-wrap:nowrap; gap:6px;}
-.top-row-head > .trh-num{flex:0 0 auto; font-weight:600; min-width:22px; font-size:.85rem;}
+.top-row-head{display:flex; align-items:flex-start; flex-wrap:nowrap; gap:6px;}
+.top-row-head > .trh-num{flex:0 0 auto; font-weight:600; min-width:22px; font-size:.85rem; padding-top:3px;}
 .top-row-head > .trh-done{flex:0 0 auto;}
 .top-row-head > .trh-title{flex:1 1 auto; min-width:0;}
+/* Titel darf (seit Version 1.9.1) umbrechen statt mit "…" abgeschnitten zu
+   werden - dafuer ist die linke Spalte seither etwas breiter. */
 .top-row-title{font-weight:600; text-decoration:none; font-size:.92rem; display:block;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+  white-space:normal; word-break:break-word; overflow-wrap:anywhere;}
 .top-row-title:hover{text-decoration:underline;}
-.top-row-actions{display:flex; gap:3px; flex:0 0 auto;}
+.top-row-actions{display:flex; gap:3px; flex:0 0 auto; padding-top:1px;}
 .top-row-actions button{padding:3px 7px; font-size:.8rem;}
 .top-row .move-form{margin-top:4px;}
 .top-row .move-form summary.btn-toggle{padding:2px 7px; font-size:.74rem;}
+/* Kompaktes "TOP hinzufuegen"-Feld (seit Version 1.9.1): steht klein direkt
+   unter der TOP-Uebersicht (in der linken Spalte, falls vorhanden) statt in
+   einer eigenen, ganzseitig breiten Karte. */
+.add-item-compact{margin-top:8px; padding:8px 9px; border:1px dashed var(--border); border-radius:8px;
+  background:#fbfcfd; max-width:400px;}
+.add-item-compact input[type=text]{width:100%; margin-bottom:6px; font-size:.86rem; padding:6px 8px;}
+.add-item-compact-row{display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap;}
+.add-item-compact-row label{display:flex; align-items:center; gap:4px; font-size:.78rem; color:var(--muted); margin:0;}
+.add-item-compact-row button{padding:4px 10px; font-size:.82rem;}
 @media (max-width:760px){
   .meeting-split{display:block;}
   .split-left, .split-right{position:static; max-height:none; overflow:visible; max-width:none; min-width:0;}
@@ -179,7 +190,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.9.0";
+SV.VERSION = "1.9.2";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -1864,16 +1875,22 @@ SV.timer = {
   clearTick(){
     if(SV.timer.tickHandle){ clearInterval(SV.timer.tickHandle); SV.timer.tickHandle = null; }
   },
-  // Sucht in der Sitzung den (hoechstens einen) laufenden TOP-Timer und aktualisiert die
-  // Anzeige im sticky Balken jede Sekunde per gezieltem DOM-Update (kein Re-Render - sonst
-  // wuerden offene Textfelder waehrend der Sitzung staendig unterbrochen).
-  startTickForMeeting(meeting){
+  // Aktualisiert die Anzeige im sticky Balken des GERADE ANGEZEIGTEN TOPs jede
+  // Sekunde per gezieltem DOM-Update (kein Re-Render - sonst wuerden offene
+  // Textfelder waehrend der Sitzung staendig unterbrochen). Seit Version
+  // 1.9.1 bewusst auf den uebergebenen, tatsaechlich angezeigten TOP bezogen
+  // (nicht mehr "irgendein laufender TOP der Sitzung") - in der zweigeteilten
+  // Ansicht (seit 1.9.0) kann naemlich ein ANDERER TOP im Hintergrund laufen,
+  // waehrend rechts ein nicht laufender TOP angezeigt wird; vorher wurde in
+  // diesem Fall faelschlich die Zeit des im Hintergrund laufenden TOPs
+  // angezeigt, obwohl der sichtbare "Start"-Button zu Recht "nicht laufend"
+  // anzeigte.
+  startTickForItem(item){
     SV.timer.clearTick();
-    const runningItem = (meeting.items||[]).find(it=>it.timerRunningSince);
-    if(!runningItem) return;
+    if(!item || !item.timerRunningSince) return;
     const el = SV.util.byId("runningTimerDisplay");
     if(!el) return;
-    const update = ()=>{ el.textContent = SV.timer.fmt(SV.timer.liveElapsedMs(runningItem)); };
+    const update = ()=>{ el.textContent = SV.timer.fmt(SV.timer.liveElapsedMs(item)); };
     update();
     SV.timer.tickHandle = setInterval(update, 1000);
   },
@@ -2680,12 +2697,31 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
     const freshOpen = SV.state._autoStartDoneForItem !== item.id;
     if(freshOpen){
       SV.state._autoStartDoneForItem = item.id;
-      const runningElsewhere = (meeting.items||[]).some(it=>it.id!==item.id && it.timerRunningSince);
+      // Seit Version 1.9.1: ein direkter Wechsel zu einem anderen TOP (ueber
+      // die immer sichtbare linke Liste, ohne den "zurueck zur Sitzung"-Link
+      // dazwischen) stoppt jetzt automatisch einen anderswo noch laufenden
+      // Timer - konsistent mit der Regel "nur ein Timer gleichzeitig" aus
+      // Phase 5, die zuvor nur beim manuellen Timer-Start oder beim
+      // "zurueck"-Button griff, nicht aber bei diesem Navigationsweg.
+      const othersRunning = (meeting.items||[]).filter(it=>it.id!==item.id && it.timerRunningSince);
+      if(othersRunning.length){
+        const nowMs = Date.now();
+        await SV.actions._mutate("meeting", meetingId, (c)=>{
+          (c.items||[]).forEach(it=>{
+            if(it.id!==item.id && it.timerRunningSince){
+              it.timerElapsedMs = (it.timerElapsedMs||0) + (nowMs - new Date(it.timerRunningSince).getTime());
+              it.timerRunningSince = null;
+            }
+          });
+        });
+        meeting = await SV.store.getMeeting(teamId, meetingId);
+        item = meeting.items.find(x=>x.id===itemId);
+      }
       // Ein bereits als "bearbeitet" markierter TOP startet beim erneuten
       // Oeffnen die Uhr NICHT automatisch weiter (Version 1.8.0) - sie bleibt
       // stehen, laesst sich aber ueber den Timer-Balken jederzeit manuell
       // wieder starten.
-      if(SV.settings.autoStartTimer && !item.done && !item.timerRunningSince && !runningElsewhere){
+      if(SV.settings.autoStartTimer && !item.done && !item.timerRunningSince){
         await SV.actions._mutate("meeting", meetingId, (c)=>{
           const it = c.items.find(x=>x.id===item.id);
           if(it && !it.timerRunningSince) it.timerRunningSince = SV.util.nowIso();
@@ -2835,6 +2871,18 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
         <button class="secondary" style="margin-left:8px;" onclick="SV.actions.restoreItem('meeting','${meeting.id}','${it.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details></div>` : "";
 
+  // Version 1.9.1: kompaktes "TOP hinzufuegen"-Feld, das direkt unter der
+  // TOP-Uebersicht steht (in der linken Spalte, falls vorhanden) statt in
+  // einer eigenen, ganzseitig breiten Karte darunter.
+  const addItemFormHtml = `
+    <div class="add-item-compact">
+      <input type="text" id="newItemTitle" placeholder="${SV.t("new_agenda_item_label")}">
+      <div class="add-item-compact-row">
+        <label><input type="checkbox" id="newItemPublic" checked style="width:auto;"> ${SV.t("label_public_checkbox")}</label>
+        <button id="addItemBtn" onclick="SV.actions.addItem('meeting','${meeting.id}','newItemTitle','newItemPublic')">${SV.t("btn_add")}</button>
+      </div>
+    </div>`;
+
   // Version 1.9.0: die Zweiteilung braucht etwas mehr Breite als die sonst
   // einspaltigen Ansichten - #app wird hier gezielt verbreitert (und bei der
   // naechsten Navigation in SV.router.go() wieder zurueckgesetzt).
@@ -2858,16 +2906,9 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
     </div>
     ${numbered.length ? `
     <div class="meeting-split ${item?'has-selection':''}">
-      <div class="split-left">${leftRowsHtml}</div>
+      <div class="split-left">${leftRowsHtml}${addItemFormHtml}</div>
       <div class="split-right">${rightHtml}</div>
-    </div>` : `<p class="muted">${SV.t("no_items_yet")}</p>`}
-    <div class="card">
-      <div class="row">
-        <div><label>${SV.t("new_agenda_item_label")}</label><input type="text" id="newItemTitle"></div>
-        <div style="flex:0; align-self:center;"><label style="display:inline;"><input type="checkbox" id="newItemPublic" checked style="width:auto;"> ${SV.t("label_public_checkbox")}</label></div>
-        <div style="flex:0;"><button id="addItemBtn" onclick="SV.actions.addItem('meeting','${meeting.id}','newItemTitle','newItemPublic')">${SV.t("btn_add")}</button></div>
-      </div>
-    </div>
+    </div>` : `<p class="muted">${SV.t("no_items_yet")}</p>${addItemFormHtml}`}
     ${trashItems}
     <div class="btn-row" style="margin-top:10px;">
       <button onclick="SV.actions.completeMeeting('${meeting.id}')">${SV.t("btn_complete_meeting")}</button>
@@ -2875,7 +2916,7 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
     </div>
   `;
   SV.util.installAutoGrow(app);
-  if(item) SV.timer.startTickForMeeting(meeting);
+  if(item) SV.timer.startTickForItem(item);
 };
 
 SV.actions.leaveMeetingItem = async function(meetingId){
