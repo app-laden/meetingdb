@@ -55,8 +55,8 @@ select, textarea{
   width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:7px; font-size:.95rem;
   background:#fff; color:var(--text); font-family:inherit;}
 textarea{resize:none; overflow-y:hidden; min-height:2.4em;}
-button, .btn{display:inline-block; background:var(--blue); color:#fff; border:none; border-radius:7px;
-  padding:8px 14px; font-size:.9rem; cursor:pointer; text-decoration:none;}
+button, .btn{display:inline-block; background:var(--blue); color:#fff; border:none; border-radius:6px;
+  padding:5px 10px; font-size:.82rem; cursor:pointer; text-decoration:none;}
 button:hover, .btn:hover{background:var(--blue-dark);}
 button.secondary, .btn.secondary{background:#eef1f4; color:var(--text); border:1px solid var(--border);}
 button.secondary:hover{background:#e3e8ed;}
@@ -64,16 +64,18 @@ button.danger{background:var(--danger-bg); color:var(--danger); border:1px solid
 button.danger:hover{background:#f6dada;}
 button:disabled{opacity:.5; cursor:default;}
 .list-item{border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:8px; background:#fbfcfd;}
-.actions{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+.actions{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px;}
 .tag{display:inline-block; background:var(--tag-bg); color:var(--blue-dark); border-radius:12px;
   padding:2px 10px; font-size:.78rem; margin-left:6px;}
 .tag.status{background:#fff3da; color:#8a5a00;}
 .tag.done{background:#e3f4e9; color:var(--green);}
 details{margin-top:8px;}
 summary{cursor:pointer; font-size:.88rem;}
-/* Kleiner Button statt Aufklapp-Dreieck fuer den Inline-Sitzungsablauf (1.7.0) */
+/* Kleiner Button statt Aufklapp-Dreieck fuer auf-/zuklappbare Abschnitte
+   (seit 1.7.0, seit 1.8.0 auch fuer den kombinierten TOP-Detailbutton in der
+   Liste und das Verschieben-Formular) */
 summary.btn-toggle{display:inline-block; background:#eef1f4; color:var(--text); border:1px solid var(--border);
-  border-radius:7px; padding:6px 12px; font-size:.85rem; list-style:none;}
+  border-radius:6px; padding:4px 10px; font-size:.8rem; list-style:none;}
 summary.btn-toggle::-webkit-details-marker{display:none;}
 summary.btn-toggle .lbl-open{display:none;}
 details[open] > summary.btn-toggle .lbl-closed{display:none;}
@@ -83,7 +85,11 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .top-block.sub{margin-left:26px; border-left:3px solid var(--blue);}
 .top-block.done{background:#f7fbf8; border-color:#cfe8d8;}
 .top-block.done .top-title{opacity:.75;}
-.btn-done{width:34px; padding:6px 0; text-align:center; font-size:1rem; line-height:1;}
+/* TOPs, die nicht mehr "normal" sind (verschoben oder gestrichen), werden
+   grau/blass dargestellt (Version 1.8.0) - ueber "zuruecksetzen auf normal"
+   wieder normal. */
+.top-block.inactive{opacity:.55; background:#f5f5f5;}
+.btn-done{width:30px; padding:4px 0; text-align:center; font-size:1rem; line-height:1;}
 .btn-done.active{background:#e3f4e9; color:var(--green); border-color:#bfe2cc;}
 .btn-timer.active{background:#fff3da; color:#8a5a00; border-color:#e0c48c;}
 .top-block .top-title{font-weight:600; margin-bottom:4px;}
@@ -135,7 +141,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.7.0";
+SV.VERSION = "1.8.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -241,12 +247,17 @@ SV.i18n = {
       label_prepared_antraege: "Vorbereitete Anträge",
       label_more_antraege: "Weitere Beschlüsse",
       no_prepared_antraege: "Keine vorbereiteten Anträge.",
-      label_meeting_layout: "Ansicht für Tagesordnungspunkte",
-      opt_layout_detail: "TOP öffnet in eigener Ansicht (empfohlen)",
-      opt_layout_inline: "TOP in der Liste auf-/zuklappen",
       label_auto_timer: "Beim Öffnen eines TOPs die Uhr automatisch starten",
       btn_show_details: "Details anzeigen",
       btn_hide_details: "Details ausblenden",
+      btn_move_to_agenda: "Verschieben",
+      label_move_target_agenda: "In welche Agenda verschieben?",
+      opt_new_agenda: "+ Neue Agenda anlegen",
+      label_new_agenda_title: "Titel der neuen Agenda",
+      btn_confirm_move: "Verschieben bestätigen",
+      tag_moved_to: "verschoben in {0}",
+      toast_select_target_agenda: "Bitte eine Ziel-Agenda auswählen oder einen Titel für eine neue Agenda eingeben.",
+      summary_more_fields: "Weitere Textfelder",
       back_to_meeting_items: "← zurück zur Sitzung",
       item_not_found: "Tagesordnungspunkt nicht gefunden.",
       erg_offen: "offen", erg_angenommen: "angenommen", erg_abgelehnt: "abgelehnt",
@@ -534,12 +545,17 @@ SV.i18n = {
       label_prepared_antraege: "Prepared motions",
       label_more_antraege: "More motions/resolutions",
       no_prepared_antraege: "No prepared motions.",
-      label_meeting_layout: "View for agenda items",
-      opt_layout_detail: "Item opens in its own view (recommended)",
-      opt_layout_inline: "Expand/collapse item in the list",
       label_auto_timer: "Automatically start the timer when opening an item",
       btn_show_details: "Show details",
       btn_hide_details: "Hide details",
+      btn_move_to_agenda: "Move",
+      label_move_target_agenda: "Move to which agenda?",
+      opt_new_agenda: "+ Create new agenda",
+      label_new_agenda_title: "Title of the new agenda",
+      btn_confirm_move: "Confirm move",
+      tag_moved_to: "moved to {0}",
+      toast_select_target_agenda: "Please select a target agenda or enter a title for a new one.",
+      summary_more_fields: "More text fields",
       back_to_meeting_items: "← back to meeting",
       item_not_found: "Agenda item not found.",
       erg_offen: "open", erg_angenommen: "approved", erg_abgelehnt: "rejected",
@@ -1552,8 +1568,81 @@ SV.actions.toggleItemPublic = async function(kind, containerId, itemId){
   SV.actions._refresh();
 };
 SV.actions.setItemStatus = async function(containerId, itemId, status){
+  // Wird ein verschobener TOP auf "normal" zurueckgesetzt, muss die beim
+  // Verschieben angelegte Kopie in der Ziel-Agenda geloescht werden (inkl.
+  // ihrer Anhang-Rohdaten) - sonst gibt es den Punkt doppelt (siehe
+  // SV.actions.moveItemToAgenda).
+  if(status === "normal"){
+    const teamId = SV.state.currentTeamId;
+    const meeting = await SV.store.getMeeting(teamId, containerId);
+    const it = meeting && (meeting.items||[]).find(x=>x.id===itemId);
+    if(it && it.verschobenZuAgendaId && it.verschobenZuItemId){
+      const targetAgenda = await SV.store.getAgenda(teamId, it.verschobenZuAgendaId);
+      if(targetAgenda){
+        const stillThere = (targetAgenda.items||[]).some(x=>x.id===it.verschobenZuItemId);
+        if(stillThere){
+          targetAgenda.items = (targetAgenda.items||[]).filter(x=> x.id!==it.verschobenZuItemId && x.parent_id!==it.verschobenZuItemId);
+          await SV.store.saveAgenda(teamId, targetAgenda);
+        }
+        await SV.store.deleteAttachmentsByScope("agenda-"+it.verschobenZuItemId);
+      }
+    }
+  }
   await SV.actions._mutate("meeting", containerId, (c)=>{
-    const it = c.items.find(x=>x.id===itemId); if(it) it.status = status;
+    const it = c.items.find(x=>x.id===itemId);
+    if(it){
+      it.status = status;
+      if(status === "normal"){ delete it.verschobenZuAgendaId; delete it.verschobenZuItemId; }
+    }
+  });
+  SV.actions._refresh();
+};
+SV.actions.moveItemToAgenda = async function(meetingId, itemId, targetSelectId, newTitleElId){
+  const teamId = SV.state.currentTeamId;
+  const targetAgendaId = SV.util.byId(targetSelectId).value;
+  const newTitle = newTitleElId ? SV.util.byId(newTitleElId).value.trim() : "";
+  if(!targetAgendaId){ SV.ui.toast(SV.t("toast_select_target_agenda")); return; }
+  if(targetAgendaId === "__new__" && !newTitle){ SV.ui.toast(SV.t("toast_select_target_agenda")); return; }
+
+  const meeting = await SV.store.getMeeting(teamId, meetingId);
+  if(!meeting) return;
+  const item = (meeting.items||[]).find(x=>x.id===itemId);
+  if(!item) return;
+
+  let targetAgenda;
+  if(targetAgendaId === "__new__"){
+    targetAgenda = SV.model.newAgenda(newTitle, "");
+  } else {
+    targetAgenda = await SV.store.getAgenda(teamId, targetAgendaId);
+    if(!targetAgenda){ SV.ui.toast(SV.t("toast_select_target_agenda")); return; }
+  }
+
+  // Inhalt wird in die Ziel-Agenda kopiert (siehe AskUserQuestion-Antwort):
+  // Titel + Vorbereitungs-Block-Inhalt + Anhaenge + nur die bereits
+  // vorbereiteten ("prepared") Antraege - waehrend des Meetings frisch
+  // hinzugefuegte Antraege bleiben im Meeting zurueck.
+  const topOrders = (targetAgenda.items||[]).filter(x=>!x.parent_id).map(x=>x.order);
+  const order = topOrders.length ? Math.max(...topOrders)+1 : 0;
+  const newItem = SV.model.newAgendaItem(item.title, {order, public:item.public});
+  const prepBlock = (item.blocks||[]).find(b=>b.kind==="prep");
+  newItem.blocks = [SV.model.newBlock(prepBlock ? prepBlock.content : "", "prep")];
+  newItem.antraege = (item.antraege||[]).filter(a=>a.prepared).map(a=> SV.model.newAntrag(Object.assign({}, a, {prepared:true})));
+  for(const at of (item.anhaenge||[])){
+    const newId = SV.util.uuid();
+    await SV.store.duplicateAttachmentFile(at.id, newId, "agenda-"+newItem.id);
+    newItem.anhaenge.push(Object.assign({}, at, {id:newId}));
+  }
+  targetAgenda.items = targetAgenda.items || [];
+  targetAgenda.items.push(newItem);
+  await SV.store.saveAgenda(teamId, targetAgenda);
+
+  await SV.actions._mutate("meeting", meetingId, (c)=>{
+    const it = c.items.find(x=>x.id===itemId);
+    if(it){
+      it.status = "verschoben";
+      it.verschobenZuAgendaId = targetAgenda.id;
+      it.verschobenZuItemId = newItem.id;
+    }
   });
   SV.actions._refresh();
 };
@@ -1748,24 +1837,20 @@ SV.timer = {
 
 /* ===================== App-Einstellungen (geraetelokal) =====================
    Export-Art fuer die Datensicherung (siehe SV.actions.exportAll weiter unten),
-   sowie seit Version 1.7.0 die Ansicht fuer Tagesordnungspunkte waehrend einer
-   Sitzung ("detail" = TOP oeffnet in eigener Ansicht, empfohlen/Default;
-   "inline" = TOP klappt in der Liste auf) und ob die Uhr beim Oeffnen eines
-   TOPs (nur in der "detail"-Ansicht) automatisch starten soll. Alles liegt wie
-   die Sprachauswahl (SV.i18n) in localStorage, pro Geraet. */
+   sowie seit Version 1.7.0, ob die Uhr beim Oeffnen eines TOPs (TOP-Detail-
+   ansicht) automatisch starten soll. Alles liegt wie die Sprachauswahl
+   (SV.i18n) in localStorage, pro Geraet. Es gibt bewusst KEINE Einstellung
+   mehr fuer die Listen-/Detaildarstellung selbst (Version 1.8.0) - TOP-Liste
+   und TOP-Detailansicht existieren immer gleichzeitig (siehe Phase 8). */
 SV.settings = {
   EXPORT_MODE_KEY: "mdb-export-mode",
   exportMode: "perTeam",
-  MEETING_LAYOUT_KEY: "mdb-meeting-layout",
-  meetingLayout: "detail",
   AUTO_TIMER_KEY: "mdb-auto-timer",
   autoStartTimer: true,
   init(){
     try{
       const saved = localStorage.getItem(SV.settings.EXPORT_MODE_KEY);
       if(saved==="single" || saved==="perTeam" || saved==="currentTeam") SV.settings.exportMode = saved;
-      const savedLayout = localStorage.getItem(SV.settings.MEETING_LAYOUT_KEY);
-      if(savedLayout==="inline" || savedLayout==="detail") SV.settings.meetingLayout = savedLayout;
       const savedAuto = localStorage.getItem(SV.settings.AUTO_TIMER_KEY);
       if(savedAuto!==null) SV.settings.autoStartTimer = savedAuto!=="0";
     }catch(e){}
@@ -1773,10 +1858,6 @@ SV.settings = {
   setExportMode(mode){
     SV.settings.exportMode = (mode==="single" || mode==="currentTeam") ? mode : "perTeam";
     try{ localStorage.setItem(SV.settings.EXPORT_MODE_KEY, SV.settings.exportMode); }catch(e){}
-  },
-  setMeetingLayout(layout){
-    SV.settings.meetingLayout = layout==="inline" ? "inline" : "detail";
-    try{ localStorage.setItem(SV.settings.MEETING_LAYOUT_KEY, SV.settings.meetingLayout); }catch(e){}
   },
   setAutoStartTimer(on){
     SV.settings.autoStartTimer = !!on;
@@ -1966,22 +2047,29 @@ SV.actions.logoutTeam = function(){
 };
 
 /* ---------- gemeinsame Bausteine: Textbloecke / Aufgaben / Antraege je TOP ---------- */
+// Rendert genau EINEN Textblock (Label + Inhalt bzw. Textarea+Buttons im
+// editierbaren Fall). Ausgelagert aus renderBlocksSection (Version 1.8.0),
+// damit die TOP-Detailansicht den Vorbereitungs- bzw. den Haupt-Meeting-
+// Protokoll-Block auch einzeln, ohne die umschliessende <details>-Liste,
+// darstellen kann.
+SV.views._blockRow = function(kind, containerId, item, b, editable){
+  const taId = `blk-${b.id}`;
+  const kindLabel = b.kind==="prep" ? SV.t("block_label_prep") : (b.kind==="protokoll" ? SV.t("block_label_protokoll") : "");
+  const labelHtml = kindLabel ? `<div class="small muted" style="margin-bottom:2px;"><strong>${kindLabel}</strong></div>` : "";
+  if(!editable) return `<div class="small" style="margin-bottom:6px;">${labelHtml}${SV.textformat.renderSegmentsHtml(b.content)}</div>`;
+  return `<div style="margin-bottom:8px;">
+    ${labelHtml}
+    <textarea id="${taId}">${SV.util.esc(b.content)}</textarea>
+    <div class="btn-row" style="margin-top:4px;">
+      <button class="secondary" onclick="SV.actions.editBlock('${kind}','${containerId}','${item.id}','${b.id}','${taId}')">${SV.t("btn_save")}</button>
+      <button class="danger" onclick="SV.actions.deleteBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_delete")}</button>
+    </div>
+  </div>`;
+};
+
 SV.views.renderBlocksSection = function(kind, containerId, item, editable){
   const n = item.blocks.length;
-  const rows = item.blocks.map(b=>{
-    const taId = `blk-${b.id}`;
-    const kindLabel = b.kind==="prep" ? SV.t("block_label_prep") : (b.kind==="protokoll" ? SV.t("block_label_protokoll") : "");
-    const labelHtml = kindLabel ? `<div class="small muted" style="margin-bottom:2px;"><strong>${kindLabel}</strong></div>` : "";
-    if(!editable) return `<div class="small" style="margin-bottom:6px;">${labelHtml}${SV.textformat.renderSegmentsHtml(b.content)}</div>`;
-    return `<div style="margin-bottom:8px;">
-      ${labelHtml}
-      <textarea id="${taId}">${SV.util.esc(b.content)}</textarea>
-      <div class="btn-row" style="margin-top:4px;">
-        <button class="secondary" onclick="SV.actions.editBlock('${kind}','${containerId}','${item.id}','${b.id}','${taId}')">${SV.t("btn_save")}</button>
-        <button class="danger" onclick="SV.actions.deleteBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_delete")}</button>
-      </div>
-    </div>`;
-  }).join("");
+  const rows = item.blocks.map(b=> SV.views._blockRow(kind, containerId, item, b, editable)).join("");
   const trash = (item.geloeschte_blocks||[]).length ? `
     <details><summary class="small">${SV.t("deleted_blocks_summary", item.geloeschte_blocks.length)}</summary>
       ${item.geloeschte_blocks.map(b=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((b.content||"").slice(0,60))}…
@@ -2056,7 +2144,7 @@ SV.beschluss = {
   label(v){ const e = SV.beschluss.ERG.find(x=>x.value===v); return e ? SV.t(e.key) : v; },
 };
 
-SV.views.renderAntraegeSection = function(kind, containerId, item, editable){
+SV.views.renderAntraegeSection = function(kind, containerId, item, editable, autoOpen){
   const n = item.antraege.length;
   const ergOptions = (selected)=> SV.beschluss.ERG.map(e=>`<option value="${e.value}" ${e.value===selected?"selected":""}>${SV.beschluss.label(e.value)}</option>`).join("");
   const renderOne = (a)=>{
@@ -2112,7 +2200,7 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable){
       </div>
       <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addAntrag('${kind}','${containerId}','${item.id}',{antrag_text:SV.util.byId('newa-atxt-${item.id}').value,beschluss_text:SV.util.byId('newa-abtxt-${item.id}').value,ergebnis:SV.util.byId('newa-erg-${item.id}').value,dafuer:+SV.util.byId('newa-daf-${item.id}').value,dagegen:+SV.util.byId('newa-dag-${item.id}').value,enthaltung:+SV.util.byId('newa-enth-${item.id}').value})">${n?SV.t("btn_add_antrag_more"):SV.t("btn_add_antrag")}</button>
     </div>` : "";
-  return `<details><summary>${SV.t("antraege_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+  return `<details ${autoOpen?"open":""}><summary>${SV.t("antraege_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
 
 /* --- Anhänge --- */
@@ -2120,7 +2208,7 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable){
 // oder "verborgen" (nicht in der PDF, bleibt aber in der App sichtbar - auch
 // im abgeschlossenen Protokoll, s. meetingView). Zeigt in BEIDEN Modi
 // (editable und nicht editable) alle Anhänge, unabhaengig von display.
-SV.views.renderAttachmentsSection = function(kind, containerId, item, editable){
+SV.views.renderAttachmentsSection = function(kind, containerId, item, editable, autoOpen){
   const list = item.anhaenge || [];
   const n = list.length;
   const icon = (k)=> k==="pdf" ? "📄" : (k==="bild" ? "🖼️" : "📎");
@@ -2169,7 +2257,7 @@ SV.views.renderAttachmentsSection = function(kind, containerId, item, editable){
         <div style="flex:0;"><button class="secondary" onclick="SV.actions.addAttachment('${kind}','${containerId}','${item.id}','newat-file-${item.id}','newat-cap-${item.id}','newat-disp-${item.id}','newat-fn-${item.id}')">${n?SV.t("btn_add_attachment_more"):SV.t("btn_add_attachment")}</button></div>
       </div>
     </div>` : "";
-  return `<details><summary>${SV.t("attachments_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+  return `<details ${autoOpen?"open":""}><summary>${SV.t("attachments_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
 
 SV.actions.addAttachment = async function(kind, containerId, itemId, fileInputId, capId, dispId, fnId){
@@ -2370,12 +2458,15 @@ SV.views.agendaEdit = async function(app, agendaId){
         <button class="danger" onclick="SV.actions.deleteItem('agenda','${agenda.id}','${item.id}')">${SV.t("btn_delete")}</button>
       </div>
       ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-      <div style="margin-top:6px;">
-        ${SV.views.renderBlocksSection("agenda", agenda.id, item, true)}
-        ${SV.views.renderAntraegeSection("agenda", agenda.id, item, true)}
-        ${SV.views.renderTasksSection("agenda", agenda.id, item, true)}
-        ${SV.views.renderAttachmentsSection("agenda", agenda.id, item, true)}
-      </div>
+      <details style="margin-top:6px;">
+        <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_show_details")}</span><span class="lbl-open">${SV.t("btn_hide_details")}</span></summary>
+        <div style="margin-top:6px;">
+          ${SV.views.renderBlocksSection("agenda", agenda.id, item, true)}
+          ${SV.views.renderAntraegeSection("agenda", agenda.id, item, true)}
+          ${SV.views.renderTasksSection("agenda", agenda.id, item, true)}
+          ${SV.views.renderAttachmentsSection("agenda", agenda.id, item, true)}
+        </div>
+      </details>
     </div>`).join("");
 
   const trashItems = (agenda.geloeschte_items||[]).length ? `
@@ -2501,22 +2592,36 @@ SV.views.meetingRun = async function(app, meetingId){
 
   const numbered = SV.model.numberedItems(meeting.items);
   const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
-  const layout = SV.settings.meetingLayout;
 
-  const layoutSettings = `
-    <div class="card">
-      <label>${SV.t("label_meeting_layout")}</label>
-      <select onchange="SV.actions.setMeetingLayout(this.value)">
-        <option value="detail" ${layout==="detail"?"selected":""}>${SV.t("opt_layout_detail")}</option>
-        <option value="inline" ${layout==="inline"?"selected":""}>${SV.t("opt_layout_inline")}</option>
-      </select>
-      ${layout==="detail" ? `
-      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
-        <input type="checkbox" ${SV.settings.autoStartTimer?"checked":""} style="width:auto;" onchange="SV.actions.setAutoStartTimer(this.checked)">
-        <span class="small muted" style="margin:0;">${SV.t("label_auto_timer")}</span>
-      </label>` : ``}
-    </div>`;
+  // Fuer das "Verschieben"-Formular: alle Agenden dieses Teams als moegliches
+  // Ziel (oder "neue Agenda anlegen"), sowie eine Id->Titel-Zuordnung fuer das
+  // "verschoben in ..."-Tag neben einem bereits verschobenen TOP (Version 1.8.0).
+  const agendas = await SV.store.listAgendas(teamId);
+  const agendaTitleById = {}; agendas.forEach(a=> agendaTitleById[a.id] = a.title || SV.t("no_title"));
 
+  const moveForm = (item)=> `
+    <details class="move-form">
+      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_move_to_agenda")}</span><span class="lbl-open">${SV.t("btn_move_to_agenda")}</span></summary>
+      <div style="margin-top:6px;">
+        <label>${SV.t("label_move_target_agenda")}</label>
+        <select id="movesel-${item.id}">
+          <option value="">—</option>
+          ${agendas.map(a=>`<option value="${a.id}">${SV.util.esc(a.title)||SV.t("no_title")}</option>`).join("")}
+          <option value="__new__">${SV.t("opt_new_agenda")}</option>
+        </select>
+        <label style="margin-top:4px;">${SV.t("label_new_agenda_title")}</label>
+        <input type="text" id="movetitle-${item.id}" placeholder="${SV.t("placeholder_agenda_title")}">
+        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${item.id}','movesel-${item.id}','movetitle-${item.id}')">${SV.t("btn_confirm_move")}</button>
+      </div>
+    </details>`;
+
+  // Version 1.8.0: keine Layout-Einstellung mehr - die TOP-Liste (hier) und
+  // die TOP-Detailansicht (SV.views.meetingItemDetail) existieren immer
+  // gleichzeitig. Der Titel-Link oeffnet die Detailansicht; ein kleiner,
+  // kombinierter Button klappt darunter alle vier Detail-Abschnitte
+  // (Textbloecke/Antraege/Aufgaben/Anhaenge) in der Liste selbst auf, ohne
+  // die Ansicht zu wechseln - nacheinander, da jeder Abschnitt selbst wieder
+  // sein eigenes <details> hat.
   const actionsRow = (item)=> `
       <div class="actions">
         <button class="secondary" onclick="SV.actions.moveItem('meeting','${meeting.id}','${item.id}','up')">↑</button>
@@ -2524,68 +2629,41 @@ SV.views.meetingRun = async function(app, meetingId){
         <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','out')">←</button>
         <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','in')">→</button>
         <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
-        ${item.status==='normal'?`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','verschoben')">${SV.t("btn_mark_postponed")}</button>
-          <button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
-          :`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
+        ${item.status==='normal'
+          ? `${moveForm(item)}<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
+          : `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
         <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
       </div>`;
 
-  let itemHtml, runningTimerBar;
-  if(layout === "detail"){
-    // Praeferierte Ansicht: nur eine schlanke Liste, jeder TOP oeffnet per Klick
-    // auf den Titel in SV.views.meetingItemDetail; keine Uhr in der Liste, weil
-    // jeder laufende Timer per "zurück"-Button in der Detailansicht angehalten
-    // wird, bevor man wieder hier landet.
-    itemHtml = numbered.map(({item,number,depth})=>`
-      <div class="top-block ${depth?'sub':''} ${item.done?'done':''}" id="top-${item.id}">
-        <div class="row" style="align-items:center;">
-          <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
-          <div style="flex:0;">
-            <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
-          </div>
-          <div>
-            <a href="#/meetings/${meeting.id}/items/${item.id}" style="font-weight:600; ${item.done?'opacity:.6;':''}">${SV.util.esc(item.title)}</a>
-            ${(item.timerElapsedMs||item.timerRunningSince) ? `<span class="muted small"> · ⏱ ${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>` : ``}
-          </div>
+  const itemHtml = numbered.map(({item,number,depth})=>`
+    <div class="top-block ${depth?'sub':''} ${item.done?'done':''} ${item.status!=='normal'?'inactive':''}" id="top-${item.id}">
+      <div class="row" style="align-items:center;">
+        <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
+        <div style="flex:0;">
+          <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
         </div>
-        <div class="small muted" style="margin-top:2px;">
-          ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-          ${item.status!=='normal'?`<span class="tag status">${STATUS_LABEL[item.status]}</span>`:``}
+        <div>
+          <a href="#/meetings/${meeting.id}/items/${item.id}" style="font-weight:600; ${item.done?'opacity:.6;':''}">${SV.util.esc(item.title)}</a>
+          ${(item.timerElapsedMs||item.timerRunningSince) ? `<span class="muted small"> · ⏱ ${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>` : ``}
         </div>
-        ${actionsRow(item)}
-      </div>`).join("");
-    runningTimerBar = "";
-  } else {
-    // Alternative Ansicht ("inline"): wie bisher alles in der Liste, aber die
-    // Textbloecke/Antraege/Aufgaben/Anhaenge sind hinter einem kleinen Button
-    // verborgen statt immer offen, und es gibt keine Uhr.
-    itemHtml = numbered.map(({item,number,depth})=>`
-      <div class="top-block ${depth?'sub':''} ${item.done?'done':''}" id="top-${item.id}">
-        <div class="row" style="align-items:center;">
-          <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
-          <div style="flex:0;">
-            <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
-          </div>
-          <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}" style="${item.done?'opacity:.6;':''}"></div>
-          <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('meeting','${meeting.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
+      </div>
+      <div class="small muted" style="margin-top:2px;">
+        ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
+        ${item.status!=='normal' ? (item.status==='verschoben' && item.verschobenZuAgendaId
+          ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[item.verschobenZuAgendaId]||"?")}</span>`
+          : `<span class="tag status">${STATUS_LABEL[item.status]}</span>`) : ``}
+      </div>
+      ${actionsRow(item)}
+      <details>
+        <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_show_details")}</span><span class="lbl-open">${SV.t("btn_hide_details")}</span></summary>
+        <div style="margin-top:6px;">
+          ${SV.views.renderBlocksSection("meeting", meeting.id, item, true)}
+          ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true)}
+          ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
+          ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true)}
         </div>
-        <div class="small muted" style="margin-top:2px;">
-          ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-          ${item.status!=='normal'?`<span class="tag status">${STATUS_LABEL[item.status]}</span>`:``}
-        </div>
-        ${actionsRow(item)}
-        <details>
-          <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_show_details")}</span><span class="lbl-open">${SV.t("btn_hide_details")}</span></summary>
-          <div style="margin-top:6px;">
-            ${SV.views.renderBlocksSection("meeting", meeting.id, item, true)}
-            ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true)}
-            ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
-            ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true)}
-          </div>
-        </details>
-      </div>`).join("");
-    runningTimerBar = "";
-  }
+      </details>
+    </div>`).join("");
 
   const trashItems = (meeting.geloeschte_items||[]).length ? `
     <div class="card"><details><summary>${SV.t("deleted_items_summary", meeting.geloeschte_items.length)}</summary>
@@ -2595,7 +2673,6 @@ SV.views.meetingRun = async function(app, meetingId){
 
   app.innerHTML = `
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
-    ${runningTimerBar}
     <div class="card">
       <form class="row" onsubmit="SV.actions.updateMeetingMeta(event,'${meeting.id}')">
         <div><label>${SV.t("label_title")}</label><input type="text" id="editMeetingTitle" required value="${SV.util.esc(meeting.title)}"></div>
@@ -2606,8 +2683,11 @@ SV.views.meetingRun = async function(app, meetingId){
         <input type="checkbox" id="editMeetingShowTimer" ${meeting.showTimerInProtocol?'checked':''} style="width:auto;" onchange="SV.actions.toggleShowTimerInProtocol('${meeting.id}', this.checked)">
         <span class="small muted" style="margin:0;">${SV.t("label_show_timer_in_protocol")}</span>
       </label>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
+        <input type="checkbox" ${SV.settings.autoStartTimer?"checked":""} style="width:auto;" onchange="SV.actions.setAutoStartTimer(this.checked)">
+        <span class="small muted" style="margin:0;">${SV.t("label_auto_timer")}</span>
+      </label>
     </div>
-    ${layoutSettings}
     ${itemHtml || `<p class="muted">${SV.t("no_items_yet")}</p>`}
     <div class="card">
       <div class="row">
@@ -2649,7 +2729,11 @@ SV.views.meetingItemDetail = async function(app, meetingId, itemId){
   if(freshOpen){
     SV.state._autoStartDoneForItem = item.id;
     const runningElsewhere = (meeting.items||[]).some(it=>it.id!==item.id && it.timerRunningSince);
-    if(SV.settings.autoStartTimer && !item.timerRunningSince && !runningElsewhere){
+    // Ein bereits als "bearbeitet" markierter TOP startet beim erneuten
+    // Oeffnen die Uhr NICHT automatisch weiter (Version 1.8.0) - sie bleibt
+    // stehen, laesst sich aber ueber den Timer-Balken jederzeit manuell
+    // wieder starten.
+    if(SV.settings.autoStartTimer && !item.done && !item.timerRunningSince && !runningElsewhere){
       await SV.actions._mutate("meeting", meetingId, (c)=>{
         const it = c.items.find(x=>x.id===item.id);
         if(it && !it.timerRunningSince) it.timerRunningSince = SV.util.nowIso();
@@ -2661,12 +2745,59 @@ SV.views.meetingItemDetail = async function(app, meetingId, itemId){
 
   const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
 
+  // Fuer das "Verschieben"-Formular, wie in der TOP-Liste (SV.views.meetingRun).
+  const agendas = await SV.store.listAgendas(teamId);
+  const agendaTitleById = {}; agendas.forEach(a=> agendaTitleById[a.id] = a.title || SV.t("no_title"));
+  const moveForm = `
+    <details class="move-form">
+      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_move_to_agenda")}</span><span class="lbl-open">${SV.t("btn_move_to_agenda")}</span></summary>
+      <div style="margin-top:6px;">
+        <label>${SV.t("label_move_target_agenda")}</label>
+        <select id="movesel-${item.id}">
+          <option value="">—</option>
+          ${agendas.map(a=>`<option value="${a.id}">${SV.util.esc(a.title)||SV.t("no_title")}</option>`).join("")}
+          <option value="__new__">${SV.t("opt_new_agenda")}</option>
+        </select>
+        <label style="margin-top:4px;">${SV.t("label_new_agenda_title")}</label>
+        <input type="text" id="movetitle-${item.id}" placeholder="${SV.t("placeholder_agenda_title")}">
+        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${item.id}','movesel-${item.id}','movetitle-${item.id}')">${SV.t("btn_confirm_move")}</button>
+      </div>
+    </details>`;
+
   const timerBar = `
     <div id="runningTimerBar" class="card" style="background:${item.timerRunningSince?'#fff3da':'#f5f6f7'}; border-color:${item.timerRunningSince?'#e0c48c':'var(--border)'}; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <strong style="margin:0;">⏱</strong>
       <span id="runningTimerDisplay" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.1rem; font-weight:600; ${item.timerRunningSince?'color:#8a5a00;':''}">${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>
       <button class="secondary" style="margin-left:auto;" onclick="SV.actions.toggleItemTimer('${meeting.id}','${item.id}')">${item.timerRunningSince?SV.t("btn_timer_stop_bar"):SV.t("tip_timer_start")}</button>
     </div>`;
+
+  // Inhaltsabhaengige Abschnitte (Version 1.8.0): Vorbereitung und das
+  // Haupt-Meeting-Protokoll werden immer direkt angezeigt (kein Button
+  // notwendig); Anhaenge und Antraege/Beschluesse werden angezeigt, wenn
+  // schon etwas vorhanden ist, sonst stehen sie hinter ihrem eigenen
+  // (ohnehin vorhandenen) Aufklapp-Button; Aufgaben und "weitere
+  // Textfelder" stehen IMMER hinter einem Button, unabhaengig vom Inhalt.
+  const prepBlock = (item.blocks||[]).find(b=>b.kind==="prep");
+  const mainProtokollBlock = (item.blocks||[]).find(b=>b.kind==="protokoll");
+  const extraBlocks = (item.blocks||[]).filter(b=> b!==prepBlock && b!==mainProtokollBlock);
+  const prepHtml = prepBlock ? SV.views._blockRow("meeting", meeting.id, item, prepBlock, true) : "";
+  const protokollHtml = mainProtokollBlock ? SV.views._blockRow("meeting", meeting.id, item, mainProtokollBlock, true) : "";
+  const extraRows = extraBlocks.map(b=> SV.views._blockRow("meeting", meeting.id, item, b, true)).join("");
+  const extraTrash = (item.geloeschte_blocks||[]).length ? `
+    <details><summary class="small">${SV.t("deleted_blocks_summary", item.geloeschte_blocks.length)}</summary>
+      ${item.geloeschte_blocks.map(b=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((b.content||"").slice(0,60))}…
+        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('meeting','${meeting.id}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+    </details>` : "";
+  const extraAddForm = `
+    <div style="margin-top:6px;">
+      <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
+      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('meeting','${meeting.id}','${item.id}','newblk-${item.id}')">${extraBlocks.length?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
+    </div>`;
+  const extraBlocksSection = `
+    <details>
+      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("summary_more_fields")}</span><span class="lbl-open">${SV.t("summary_more_fields")}</span></summary>
+      <div style="margin-top:6px;">${extraRows}${extraTrash}${extraAddForm}</div>
+    </details>`;
 
   app.innerHTML = `
     <p><a href="javascript:void(0)" onclick="SV.actions.leaveMeetingItem('${meeting.id}')">${SV.t("back_to_meeting_items")}</a></p>
@@ -2681,20 +2812,24 @@ SV.views.meetingItemDetail = async function(app, meetingId, itemId){
       </div>
       <div class="small muted" style="margin-top:2px;">
         ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-        ${item.status!=='normal'?`<span class="tag status">${STATUS_LABEL[item.status]}</span>`:``}
+        ${item.status!=='normal' ? (item.status==='verschoben' && item.verschobenZuAgendaId
+          ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[item.verschobenZuAgendaId]||"?")}</span>`
+          : `<span class="tag status">${STATUS_LABEL[item.status]}</span>`) : ``}
       </div>
       <div class="actions">
         <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
-        ${item.status==='normal'?`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','verschoben')">${SV.t("btn_mark_postponed")}</button>
-          <button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
-          :`<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
+        ${item.status==='normal'
+          ? `${moveForm}<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
+          : `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
         <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
       </div>
     </div>
-    ${SV.views.renderBlocksSection("meeting", meeting.id, item, true)}
-    ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true)}
+    <div class="card">${prepHtml}</div>
+    <div class="card">${protokollHtml}</div>
+    ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true, (item.anhaenge||[]).length>0)}
+    ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true, (item.antraege||[]).length>0)}
     ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
-    ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true)}
+    ${extraBlocksSection}
   `;
   SV.util.installAutoGrow(app);
   SV.timer.startTickForMeeting(meeting);
@@ -2858,9 +2993,9 @@ SV.views.beschlussListView = async function(app, query){
 };
 
 SV.actions.jumpToItem = async function(kind, containerId, itemId){
-  // In der "detail"-Ansicht (Version 1.7.0) oeffnet ein laufendes Meeting
-  // den TOP direkt in seiner eigenen Ansicht statt nur zu ihm zu scrollen.
-  if(kind==="meeting" && SV.settings.meetingLayout==="detail"){
+  // Ein laufendes (noch nicht abgeschlossenes) Meeting oeffnet den TOP direkt
+  // in seiner eigenen Detailansicht statt nur zu ihm zu scrollen.
+  if(kind==="meeting"){
     const teamId = SV.state.currentTeamId;
     const meeting = teamId ? await SV.store.getMeeting(teamId, containerId) : null;
     if(meeting && meeting.status !== "abgeschlossen"){
@@ -3031,10 +3166,6 @@ SV.views.daten = async function(app){
 };
 SV.actions.setExportMode = function(mode){
   SV.settings.setExportMode(mode);
-  SV.router.go();
-};
-SV.actions.setMeetingLayout = function(layout){
-  SV.settings.setMeetingLayout(layout);
   SV.router.go();
 };
 SV.actions.setAutoStartTimer = function(on){
