@@ -215,7 +215,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.10.0";
+SV.VERSION = "1.10.1";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -436,6 +436,8 @@ SV.i18n = {
       reopen_summary: "🔓 Protokoll wieder öffnen (z.B. um einen Tippfehler nachträglich zu korrigieren)",
       reopen_hint: 'Setzt die Sitzung zurück auf "laufend" – danach lässt sich alles wie gewohnt bearbeiten.',
       btn_reopen: "Wieder öffnen",
+      closed_banner_text: "Diese Sitzung ist abgeschlossen und deshalb nur zum Ansehen. Zum Ändern zuerst wieder öffnen.",
+      btn_reopen_top: "🔓 Zum Bearbeiten wieder öffnen",
       completed_on: " am {0}",
       beschlussliste_h1: "Beschlussliste",
       label_search: "Suche",
@@ -738,6 +740,8 @@ SV.i18n = {
       reopen_summary: "🔓 Reopen minutes (e.g. to fix a typo afterwards)",
       reopen_hint: 'Resets the meeting to "running" – everything can then be edited as usual.',
       btn_reopen: "Reopen",
+      closed_banner_text: "This meeting is completed and therefore read-only. Reopen it first to make changes.",
+      btn_reopen_top: "🔓 Reopen for editing",
       completed_on: " on {0}",
       beschlussliste_h1: "Resolutions",
       label_search: "Search",
@@ -3063,6 +3067,10 @@ SV.views.meetingView = function(app, meeting){
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
     <h1>${SV.util.esc(meeting.title)||SV.t("no_title")}</h1>
     <p class="muted">${meeting.date?SV.util.dmy(meeting.date):SV.t("no_date")} · ${SV.t("status_done_label")}${meeting.completed_at?SV.t("completed_on", SV.util.dmy(meeting.completed_at.slice(0,10))):""}</p>
+    <div class="card closed-banner" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:space-between;">
+      <span class="small">${SV.t("closed_banner_text")}</span>
+      <button id="btnReopenTop" onclick="SV.actions.reopenMeeting('${meeting.id}')">${SV.t("btn_reopen_top")}</button>
+    </div>
     ${itemHtml}
     <div class="card">
       <div class="btn-row">
