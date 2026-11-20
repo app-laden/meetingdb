@@ -106,7 +106,7 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .split-left, .split-right{position:sticky; top:var(--split-top, 92px);
   max-height:calc(100vh - var(--split-top, 92px) - 14px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
 .split-right-empty{color:var(--muted); text-align:center; padding:40px 16px;}
-.top-row{border:1px solid var(--border); border-radius:8px; padding:7px 9px; margin-bottom:7px; background:#fff;}
+.top-row{border:1px solid var(--border); border-radius:8px; padding:5px 8px; margin-bottom:5px; background:#fff;}
 .top-row.sub{margin-left:16px; border-left:3px solid var(--blue);}
 .top-row.done{background:#f7fbf8; border-color:#cfe8d8;}
 .top-row.inactive{opacity:.55; background:#f5f5f5;}
@@ -115,8 +115,19 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
    ".row > *{min-width:140px}" fuer Formularfelder gedacht ist und die
    kompakte TOP-Zeile sonst sprengen wuerde). */
 .top-row-head{display:flex; align-items:flex-start; flex-wrap:nowrap; gap:6px;}
-.top-row-head > .trh-num{flex:0 0 auto; font-weight:600; min-width:22px; font-size:.85rem; padding-top:3px;}
-.top-row-head > .trh-done{flex:0 0 auto;}
+/* Seit Version 1.10.0: Nummer und Abhaken-Kreis stehen wie bisher
+   nebeneinander, der (jetzt winzige) Verschieben-Knopf sitzt als zweite,
+   kleine Zeile direkt darunter, statt als eigener Text-Button unterhalb
+   der GANZEN TOP-Zeile - dadurch braucht die linke Spalte nur noch so viel
+   Hoehe wie Nummer+Kreis zusammen mit dem winzigen Verschieben-Knopf, was
+   bei kurzen/einzeiligen Titeln meist weniger ist als Titel+Tags brauchen
+   (Nutzerwunsch: "jeder Agendapunkt deutlich niedriger, man sieht mehrere
+   als aktuell"). */
+.top-row-head > .trh-stack{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:1px; position:relative;}
+.trh-stack details.move-form{margin-top:0;}
+.trh-stack .trh-top{display:flex; align-items:center; gap:3px;}
+.trh-top .trh-num{font-weight:600; font-size:.74rem; line-height:1;}
+.trh-top .btn-done{width:18px; height:18px; padding:0; font-size:.65rem; line-height:1;}
 .top-row-head > .trh-title{flex:1 1 auto; min-width:0;}
 /* Titel darf (seit Version 1.9.1) umbrechen statt mit "…" abgeschnitten zu
    werden - dafuer ist die linke Spalte seither etwas breiter. */
@@ -125,8 +136,22 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .top-row-title:hover{text-decoration:underline;}
 .top-row-actions{display:flex; gap:3px; flex:0 0 auto; padding-top:1px;}
 .top-row-actions button{padding:3px 7px; font-size:.8rem;}
-.top-row .move-form{margin-top:4px;}
-.top-row .move-form summary.btn-toggle{padding:2px 7px; font-size:.74rem;}
+/* Kleiner Icon-Knopf statt des bisherigen Text-Buttons "Verschieben" -
+   sitzt unter Nummer+Abhaken-Kreis; der eigentliche Rahmen mit Auswahlfeld
+   klappt nicht mehr die ganze Zeile auf, sondern erscheint als kleines,
+   frei schwebendes Feld daneben (siehe .move-form-body), damit die Zeile
+   dabei nicht in der Hoehe waechst. */
+.move-toggle{display:block; width:18px; height:18px; padding:0; margin:0; text-align:center;
+  font-size:.65rem; line-height:16px; background:#eef1f4; color:var(--text);
+  border:1px solid var(--border); border-radius:5px; cursor:pointer; list-style:none;}
+.move-toggle::-webkit-details-marker{display:none;}
+.move-toggle:hover{background:#e3e7eb;}
+.move-form-body{position:absolute; top:0; left:26px; z-index:5; width:230px;
+  background:#fff; border:1px solid var(--border); border-radius:8px;
+  box-shadow:0 4px 14px rgba(0,0,0,.18); padding:8px 9px;}
+.move-form-body label{font-size:.78rem; display:block;}
+.move-form-body select, .move-form-body input[type=text]{width:100%; font-size:.85rem; padding:5px 6px; margin-top:2px;}
+.move-form-body button{font-size:.8rem; padding:4px 10px; margin-top:6px;}
 /* Kompaktes "TOP hinzufuegen"-Feld (seit Version 1.9.1): steht klein direkt
    unter der TOP-Uebersicht (in der linken Spalte, falls vorhanden) statt in
    einer eigenen, ganzseitig breiten Karte. */
@@ -190,7 +215,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.9.2";
+SV.VERSION = "1.10.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -300,6 +325,7 @@ SV.i18n = {
       btn_show_details: "Details anzeigen",
       btn_hide_details: "Details ausblenden",
       btn_move_to_agenda: "Verschieben",
+      tip_move_to_agenda: "Verschieben in andere Agenda",
       label_move_target_agenda: "In welche Agenda verschieben?",
       opt_new_agenda: "+ Neue Agenda anlegen",
       label_new_agenda_title: "Titel der neuen Agenda",
@@ -350,7 +376,7 @@ SV.i18n = {
       tag_already_started_once: "bereits gestartet",
       tag_already_started_n: "{0}× bereits gestartet",
       btn_edit: "Bearbeiten",
-      btn_start_meeting_again: "Erneut als Sitzung starten",
+      btn_start_meeting_again: "Sitzung öffnen",
       btn_start_meeting: "Sitzung starten",
       started_from: "Daraus gestartet: ",
       status_done_label: "abgeschlossen",
@@ -601,6 +627,7 @@ SV.i18n = {
       btn_show_details: "Show details",
       btn_hide_details: "Hide details",
       btn_move_to_agenda: "Move",
+      tip_move_to_agenda: "Move to another agenda",
       label_move_target_agenda: "Move to which agenda?",
       opt_new_agenda: "+ Create new agenda",
       label_new_agenda_title: "Title of the new agenda",
@@ -651,7 +678,7 @@ SV.i18n = {
       tag_already_started_once: "already started",
       tag_already_started_n: "already started {0}×",
       btn_edit: "Edit",
-      btn_start_meeting_again: "Start as meeting again",
+      btn_start_meeting_again: "Open meeting",
       btn_start_meeting: "Start meeting",
       started_from: "Started from: ",
       status_done_label: "completed",
@@ -2552,6 +2579,12 @@ SV.views.agendaEdit = async function(app, agendaId){
         <button class="secondary" style="margin-left:8px;" onclick="SV.actions.restoreItem('agenda','${agenda.id}','${it.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details></div>` : "";
 
+  // Seit Version 1.10.0: zeigt auch hier (nicht nur in der Agenda-Liste), ob
+  // zu dieser Agenda schon eine Sitzung existiert - der Button oeffnet dann
+  // diese wieder, statt eine weitere anzulegen (siehe SV.actions.startMeeting).
+  const byAgenda = await SV.views._meetingsByAgenda(teamId);
+  const existingMeetings = byAgenda[agenda.id] || null;
+
   app.innerHTML = `
     <p><a href="#/agendas">${SV.t("back_to_agendas")}</a></p>
     <h1>${SV.t("agenda_edit_h1")}</h1>
@@ -2573,9 +2606,10 @@ SV.views.agendaEdit = async function(app, agendaId){
       </div>
     </div>
     ${trashItems}
+    ${existingMeetings ? `<p class="muted small">${SV.t("started_from")}${existingMeetings.map(m=>`<a href="#/meetings/${m.id}">${m.date?SV.util.dmy(m.date):SV.t("no_date")} (${m.status==="abgeschlossen"?SV.t("status_done_label"):SV.t("status_running_label")})</a>`).join(", ")}</p>` : ``}
     <div class="btn-row">
       <button class="secondary" onclick="SV.pdf.agendaPdf('${agenda.id}')">${SV.t("btn_agenda_pdf")}</button>
-      <button onclick="SV.actions.startMeeting('${agenda.id}')">${SV.t("btn_start_meeting")}</button>
+      <button onclick="SV.actions.startMeeting('${agenda.id}')">${existingMeetings?SV.t("btn_start_meeting_again"):SV.t("btn_start_meeting")}</button>
     </div>
   `;
   SV.util.installAutoGrow(app);
@@ -2592,6 +2626,20 @@ SV.actions.updateAgendaMeta = async function(ev, agendaId){
 
 SV.actions.startMeeting = async function(agendaId){
   const teamId = SV.state.currentTeamId;
+  // Seit Version 1.10.0 (Nutzerwunsch): eine Agenda erzeugt nur noch EINE
+  // Sitzung. Frueher legte jeder Klick auf "Sitzung starten" (z.B. nachdem
+  // man die Agenda als Vorlage noch einmal geoeffnet/bearbeitet hat) eine
+  // weitere, komplett neue Sitzung an - die alte blieb bestehen, wodurch
+  // dieselbe Agenda in "Sitzungen" immer wieder zusaetzlich auftauchte.
+  // Jetzt wird, falls fuer diese Agenda schon eine Sitzung existiert, diese
+  // stattdessen einfach wieder geoeffnet (die neueste, falls es durch
+  // aeltere Daten doch mehrere gibt) - es bleibt immer nur eine erhalten.
+  const existing = (await SV.store.listMeetings(teamId)).filter(m=>m.agenda_id===agendaId);
+  if(existing.length){
+    existing.sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.created_at||"").localeCompare(a.created_at||""));
+    location.hash = "#/meetings/"+existing[0].id;
+    return;
+  }
   const agenda = await SV.store.getAgenda(teamId, agendaId);
   const meeting = SV.model.newMeeting(agenda.date, agenda.title, agenda.id);
   meeting.items = await SV.model.buildMeetingItemsFromAgenda(agenda.items);
@@ -2742,10 +2790,14 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
   const agendas = await SV.store.listAgendas(teamId);
   const agendaTitleById = {}; agendas.forEach(a=> agendaTitleById[a.id] = a.title || SV.t("no_title"));
 
+  // Seit Version 1.10.0: nur noch ein kleiner Icon-Knopf (sitzt unter Nummer
+  // und Abhaken-Kreis in .trh-stack); das eigentliche Formular klappt als
+  // frei schwebendes kleines Feld daneben auf (siehe .move-form-body in der
+  // CSS), statt die ganze TOP-Zeile aufzublaehen.
   const moveForm = (it)=> `
     <details class="move-form">
-      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_move_to_agenda")}</span><span class="lbl-open">${SV.t("btn_move_to_agenda")}</span></summary>
-      <div style="margin-top:6px;">
+      <summary class="move-toggle" title="${SV.t("tip_move_to_agenda")}">📤</summary>
+      <div class="move-form-body">
         <label>${SV.t("label_move_target_agenda")}</label>
         <select id="movesel-${it.id}">
           <option value="">—</option>
@@ -2754,7 +2806,7 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
         </select>
         <label style="margin-top:4px;">${SV.t("label_new_agenda_title")}</label>
         <input type="text" id="movetitle-${it.id}" placeholder="${SV.t("placeholder_agenda_title")}">
-        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${it.id}','movesel-${it.id}','movetitle-${it.id}')">${SV.t("btn_confirm_move")}</button>
+        <button class="secondary" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${it.id}','movesel-${it.id}','movetitle-${it.id}')">${SV.t("btn_confirm_move")}</button>
       </div>
     </details>`;
 
@@ -2767,26 +2819,29 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
   const leftRowsHtml = numbered.map(({item:it,number,depth})=>`
     <div class="top-row ${depth?'sub':''} ${it.done?'done':''} ${it.status!=='normal'?'inactive':''} ${item && item.id===it.id?'selected':''}" id="top-${it.id}">
       <div class="top-row-head">
-        <div class="trh-num">${number}</div>
-        <div class="trh-done">
-          <button class="secondary btn-done ${it.done?'active':''}" title="${it.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${it.id}')">${it.done?'✓':'○'}</button>
+        <div class="trh-stack">
+          <div class="trh-top">
+            <div class="trh-num">${number}</div>
+            <button class="secondary btn-done ${it.done?'active':''}" title="${it.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${it.id}')">${it.done?'✓':'○'}</button>
+          </div>
+          ${it.status==='normal' ? moveForm(it) : ``}
         </div>
         <div class="trh-title">
           <a href="#/meetings/${meeting.id}/items/${it.id}" class="top-row-title" style="${it.done?'opacity:.6;':''}">${SV.util.esc(it.title)}</a>
           ${(it.timerElapsedMs||it.timerRunningSince) ? `<span class="muted small"> · ⏱ ${SV.timer.fmt(SV.timer.liveElapsedMs(it))}</span>` : ``}
+          ${(!it.public || it.status!=='normal') ? `
           <div class="small muted">
             ${it.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
             ${it.status!=='normal' ? (it.status==='verschoben' && it.verschobenZuAgendaId
               ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[it.verschobenZuAgendaId]||"?")}</span>`
               : `<span class="tag status">${STATUS_LABEL[it.status]}</span>`) : ``}
-          </div>
+          </div>` : ``}
         </div>
         <div class="top-row-actions">
           <button class="secondary" title="${SV.t('tip_move_up')}" onclick="SV.actions.moveItem('meeting','${meeting.id}','${it.id}','up')">↑</button>
           <button class="secondary" title="${SV.t('tip_move_down')}" onclick="SV.actions.moveItem('meeting','${meeting.id}','${it.id}','down')">↓</button>
         </div>
       </div>
-      ${it.status==='normal' ? moveForm(it) : ``}
     </div>`).join("");
 
   // ---- rechte Spalte: Detailansicht des ausgewaehlten TOPs (oder Hinweis) ----
