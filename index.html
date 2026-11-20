@@ -93,6 +93,44 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .btn-done.active{background:#e3f4e9; color:var(--green); border-color:#bfe2cc;}
 .btn-timer.active{background:#fff3da; color:#8a5a00; border-color:#e0c48c;}
 .top-block .top-title{font-weight:600; margin-bottom:4px;}
+/* Zweigeteilte Sitzungsansicht (Version 1.9.0): links eine schlanke,
+   immer sichtbare TOP-Uebersicht, rechts der jeweils ausgewaehlte TOP in
+   voller Ausfuehrlichkeit - beide unabhaengig voneinander scrollbar, damit
+   auch Agenden mit vielen TOPs auf einen Blick uebersichtlich bleiben. Der
+   Versatz oben (--split-top) wird per JS anhand der tatsaechlichen Hoehe von
+   #topbar + nav#tabs ermittelt (SV.ui.renderTabs), 92px ist nur ein
+   Startwert, bevor das zum ersten Mal berechnet wurde. */
+.meeting-split{display:flex; gap:14px; align-items:flex-start; margin-top:14px;}
+.split-left{flex:0 0 280px; min-width:220px; max-width:320px;}
+.split-right{flex:1 1 auto; min-width:0;}
+.split-left, .split-right{position:sticky; top:var(--split-top, 92px);
+  max-height:calc(100vh - var(--split-top, 92px) - 14px); overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.split-right-empty{color:var(--muted); text-align:center; padding:40px 16px;}
+.top-row{border:1px solid var(--border); border-radius:8px; padding:7px 9px; margin-bottom:7px; background:#fff;}
+.top-row.sub{margin-left:16px; border-left:3px solid var(--blue);}
+.top-row.done{background:#f7fbf8; border-color:#cfe8d8;}
+.top-row.inactive{opacity:.55; background:#f5f5f5;}
+.top-row.selected{border-color:var(--blue); box-shadow:0 0 0 1px var(--blue) inset; background:#eef4fb;}
+/* Eigene, schmale Flex-Zeile statt der allgemeinen ".row"-Klasse (deren
+   ".row > *{min-width:140px}" fuer Formularfelder gedacht ist und die
+   kompakte TOP-Zeile sonst sprengen wuerde). */
+.top-row-head{display:flex; align-items:center; flex-wrap:nowrap; gap:6px;}
+.top-row-head > .trh-num{flex:0 0 auto; font-weight:600; min-width:22px; font-size:.85rem;}
+.top-row-head > .trh-done{flex:0 0 auto;}
+.top-row-head > .trh-title{flex:1 1 auto; min-width:0;}
+.top-row-title{font-weight:600; text-decoration:none; font-size:.92rem; display:block;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+.top-row-title:hover{text-decoration:underline;}
+.top-row-actions{display:flex; gap:3px; flex:0 0 auto;}
+.top-row-actions button{padding:3px 7px; font-size:.8rem;}
+.top-row .move-form{margin-top:4px;}
+.top-row .move-form summary.btn-toggle{padding:2px 7px; font-size:.74rem;}
+@media (max-width:760px){
+  .meeting-split{display:block;}
+  .split-left, .split-right{position:static; max-height:none; overflow:visible; max-width:none; min-width:0;}
+  .meeting-split:not(.has-selection) .split-right{display:none;}
+  .meeting-split.has-selection .split-left{display:none;}
+}
 .block-bullets{list-style:disc; margin:4px 0 4px 20px; padding:0;}
 .block-bullets li{margin-bottom:4px;}
 .block-sublist{list-style:none; margin:2px 0; padding:0; text-indent:-14px; padding-left:14px;}
@@ -141,7 +179,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.8.0";
+SV.VERSION = "1.9.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -260,6 +298,9 @@ SV.i18n = {
       summary_more_fields: "Weitere Textfelder",
       back_to_meeting_items: "← zurück zur Sitzung",
       item_not_found: "Tagesordnungspunkt nicht gefunden.",
+      hint_select_top: "Wähle links einen Tagesordnungspunkt aus, um ihn hier zu bearbeiten.",
+      tip_move_up: "Nach oben verschieben",
+      tip_move_down: "Nach unten verschieben",
       erg_offen: "offen", erg_angenommen: "angenommen", erg_abgelehnt: "abgelehnt",
       erg_vertagt: "vertagt", erg_zurueckgezogen: "zurückgezogen",
       attachments_summary: "📎 Anhänge ({0})",
@@ -558,6 +599,9 @@ SV.i18n = {
       summary_more_fields: "More text fields",
       back_to_meeting_items: "← back to meeting",
       item_not_found: "Agenda item not found.",
+      hint_select_top: "Select an agenda item on the left to edit it here.",
+      tip_move_up: "Move up",
+      tip_move_down: "Move down",
       erg_offen: "open", erg_angenommen: "approved", erg_abgelehnt: "rejected",
       erg_vertagt: "postponed", erg_zurueckgezogen: "withdrawn",
       attachments_summary: "📎 Attachments ({0})",
@@ -1899,6 +1943,18 @@ SV.ui = {
     const pill = SV.util.byId("teamPill");
     pill.textContent = SV.state.currentTeam ? ("👥 " + SV.state.currentTeam.name) : SV.t("team_pill_none");
     pill.title = SV.t("team_pill_title");
+    SV.ui.syncSplitTopOffset();
+  },
+  // Version 1.9.0: ermittelt die tatsaechliche, geraete-/zoomunabhaengige
+  // Gesamthoehe von #topbar + nav#tabs und legt sie als CSS-Variable ab, damit
+  // die zweigeteilte Sitzungsansicht (.split-left/.split-right) genau darunter
+  // zu scrollen beginnt. offsetHeight statt getBoundingClientRect(), weil
+  // Letzteres bei bereits gescrolltem sticky-Zustand verfaelscht waere.
+  syncSplitTopOffset(){
+    const topbarEl = SV.util.byId("topbar");
+    const tabsEl = SV.util.byId("tabs");
+    const h = (topbarEl?topbarEl.offsetHeight:0) + (tabsEl?tabsEl.offsetHeight:0);
+    if(h>0) document.documentElement.style.setProperty("--split-top", (h+10)+"px");
   },
 };
 
@@ -1917,6 +1973,10 @@ SV.router = {
     }
     SV.ui.renderTabs();
     const app = SV.util.byId("app");
+    // Version 1.9.0: die Zweiteilung in SV.views.meetingRun braucht etwas mehr
+    // Breite als #app sonst zulaesst - die Route setzt das selbst, hier wird
+    // bei jeder Navigation erst einmal auf die normale Breite zurueckgesetzt.
+    app.style.maxWidth = "";
     try{
       if(parts[0] === "teams" || parts.length===0){
         await SV.views.teams(app, query);
@@ -1931,7 +1991,7 @@ SV.router = {
       } else if(parts[0]==="meetings" && parts.length===1){
         await SV.views.meetingList(app, query);
       } else if(parts[0]==="meetings" && parts[1] && parts[2]==="items" && parts[3]){
-        await SV.views.meetingItemDetail(app, parts[1], parts[3]);
+        await SV.views.meetingRun(app, parts[1], parts[3]);
       } else if(parts[0]==="meetings" && parts[1]){
         await SV.views.meetingRun(app, parts[1]);
       } else if(parts[0]==="beschluesse"){
@@ -2575,9 +2635,22 @@ SV.actions.deleteMeeting = async function(id){
   SV.router.go();
 };
 
-SV.views.meetingRun = async function(app, meetingId){
+/* ---------- Zweigeteilte Sitzungsansicht (Version 1.9.0) ----------
+   Ersetzt die getrennten Ansichten "TOP-Liste" (SV.views.meetingRun bis
+   1.8.0) und "TOP-Detailansicht" (SV.views.meetingItemDetail bis 1.8.0)
+   durch EINE Ansicht mit zwei Spalten: links eine immer sichtbare, schlanke
+   Gesamtuebersicht aller TOPs (Abhaken, Verschieben, Reihenfolge), rechts
+   der jeweils ausgewaehlte TOP in voller Ausfuehrlichkeit (Vorbereitung,
+   Protokoll, Anhaenge, Antraege, Aufgaben, weitere Textfelder, restliche
+   Aktionen wie Einruecken/als gestrichen markieren/Loeschen). Auf schmalen
+   Bildschirmen (Handy) bleibt es einspaltig: ohne Auswahl sieht man nur die
+   Liste, mit Auswahl nur die Detailansicht (ueber die CSS-Klasse
+   "has-selection", siehe Media Query bei .meeting-split).
+   itemId ist optional - ohne Auswahl zeigt die rechte Spalte nur einen
+   Hinweistext (und bleibt auf dem Handy ausgeblendet). */
+SV.views.meetingRun = async function(app, meetingId, itemId){
   const teamId = SV.state.currentTeamId;
-  const meeting = await SV.store.getMeeting(teamId, meetingId);
+  let meeting = await SV.store.getMeeting(teamId, meetingId);
   if(!meeting){ app.innerHTML = `<div class="card">${SV.t("meeting_not_found")} <a href="#/meetings">${SV.t("back_generic")}</a></div>`; return; }
   if(meeting.status === "abgeschlossen") return SV.views.meetingView(app, meeting);
 
@@ -2590,80 +2663,171 @@ SV.views.meetingRun = async function(app, meetingId){
   (meeting.items||[]).forEach(it=>{ if(SV.model.ensureProtokollBlock(it)) meetingChanged = true; });
   if(meetingChanged) await SV.store.saveMeeting(teamId, meeting);
 
+  let item = itemId ? (meeting.items||[]).find(x=>x.id===itemId) : null;
+  if(itemId && !item){
+    app.innerHTML = `<div class="card">${SV.t("item_not_found")} <a href="javascript:void(0)" onclick="SV.actions.leaveMeetingItem('${meeting.id}')">${SV.t("back_to_meeting_items")}</a></div>`;
+    return;
+  }
+
+  if(item){
+    // Uhr automatisch starten (sofern Einstellung aktiv und kein anderer
+    // TOP-Timer dieser Sitzung laeuft) - ohne bereits vorhandene Zeit zu
+    // verwerfen, damit ein erneutes Oeffnen die Uhr wie gewünscht einfach
+    // weiterlaufen laesst. NUR beim frischen Oeffnen dieses TOPs pruefen,
+    // nicht bei jedem Re-Render dieser Ansicht (sonst wuerde z.B. das
+    // manuelle Stoppen ueber den Balken die Uhr durch den folgenden
+    // Re-Render sofort wieder automatisch starten).
+    const freshOpen = SV.state._autoStartDoneForItem !== item.id;
+    if(freshOpen){
+      SV.state._autoStartDoneForItem = item.id;
+      const runningElsewhere = (meeting.items||[]).some(it=>it.id!==item.id && it.timerRunningSince);
+      // Ein bereits als "bearbeitet" markierter TOP startet beim erneuten
+      // Oeffnen die Uhr NICHT automatisch weiter (Version 1.8.0) - sie bleibt
+      // stehen, laesst sich aber ueber den Timer-Balken jederzeit manuell
+      // wieder starten.
+      if(SV.settings.autoStartTimer && !item.done && !item.timerRunningSince && !runningElsewhere){
+        await SV.actions._mutate("meeting", meetingId, (c)=>{
+          const it = c.items.find(x=>x.id===item.id);
+          if(it && !it.timerRunningSince) it.timerRunningSince = SV.util.nowIso();
+        });
+        meeting = await SV.store.getMeeting(teamId, meetingId);
+        item = meeting.items.find(x=>x.id===itemId);
+      }
+    }
+  }
+
   const numbered = SV.model.numberedItems(meeting.items);
   const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
 
-  // Fuer das "Verschieben"-Formular: alle Agenden dieses Teams als moegliches
-  // Ziel (oder "neue Agenda anlegen"), sowie eine Id->Titel-Zuordnung fuer das
-  // "verschoben in ..."-Tag neben einem bereits verschobenen TOP (Version 1.8.0).
+  // Fuer das "Verschieben"-Formular (nur noch links in der Uebersicht, seit
+  // Version 1.9.0): alle Agenden dieses Teams als moegliches Ziel (oder
+  // "neue Agenda anlegen"), sowie eine Id->Titel-Zuordnung fuer das
+  // "verschoben in ..."-Tag neben einem bereits verschobenen TOP.
   const agendas = await SV.store.listAgendas(teamId);
   const agendaTitleById = {}; agendas.forEach(a=> agendaTitleById[a.id] = a.title || SV.t("no_title"));
 
-  const moveForm = (item)=> `
+  const moveForm = (it)=> `
     <details class="move-form">
       <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_move_to_agenda")}</span><span class="lbl-open">${SV.t("btn_move_to_agenda")}</span></summary>
       <div style="margin-top:6px;">
         <label>${SV.t("label_move_target_agenda")}</label>
-        <select id="movesel-${item.id}">
+        <select id="movesel-${it.id}">
           <option value="">—</option>
           ${agendas.map(a=>`<option value="${a.id}">${SV.util.esc(a.title)||SV.t("no_title")}</option>`).join("")}
           <option value="__new__">${SV.t("opt_new_agenda")}</option>
         </select>
         <label style="margin-top:4px;">${SV.t("label_new_agenda_title")}</label>
-        <input type="text" id="movetitle-${item.id}" placeholder="${SV.t("placeholder_agenda_title")}">
-        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${item.id}','movesel-${item.id}','movetitle-${item.id}')">${SV.t("btn_confirm_move")}</button>
+        <input type="text" id="movetitle-${it.id}" placeholder="${SV.t("placeholder_agenda_title")}">
+        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${it.id}','movesel-${it.id}','movetitle-${it.id}')">${SV.t("btn_confirm_move")}</button>
       </div>
     </details>`;
 
-  // Version 1.8.0: keine Layout-Einstellung mehr - die TOP-Liste (hier) und
-  // die TOP-Detailansicht (SV.views.meetingItemDetail) existieren immer
-  // gleichzeitig. Der Titel-Link oeffnet die Detailansicht; ein kleiner,
-  // kombinierter Button klappt darunter alle vier Detail-Abschnitte
-  // (Textbloecke/Antraege/Aufgaben/Anhaenge) in der Liste selbst auf, ohne
-  // die Ansicht zu wechseln - nacheinander, da jeder Abschnitt selbst wieder
-  // sein eigenes <details> hat.
-  const actionsRow = (item)=> `
-      <div class="actions">
-        <button class="secondary" onclick="SV.actions.moveItem('meeting','${meeting.id}','${item.id}','up')">↑</button>
-        <button class="secondary" onclick="SV.actions.moveItem('meeting','${meeting.id}','${item.id}','down')">↓</button>
-        <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','out')">←</button>
-        <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','in')">→</button>
-        <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
-        ${item.status==='normal'
-          ? `${moveForm(item)}<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
-          : `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
-        <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
+  // ---- linke Spalte: schlanke Gesamtuebersicht aller TOPs ----
+  // Je Zeile: Nummer, Abhaken, Titel (oeffnet rechts die Detailansicht),
+  // verstrichene Zeit/Status-Tag, Reihenfolge (↑↓) und das kleine
+  // Verschieben-Feld. Einruecken (←→), oeffentlich/nicht-oeffentlich,
+  // gestrichen-markieren und Loeschen stehen seit Version 1.9.0 nur noch
+  // rechts bei der Detailansicht, um die Uebersicht schlank zu halten.
+  const leftRowsHtml = numbered.map(({item:it,number,depth})=>`
+    <div class="top-row ${depth?'sub':''} ${it.done?'done':''} ${it.status!=='normal'?'inactive':''} ${item && item.id===it.id?'selected':''}" id="top-${it.id}">
+      <div class="top-row-head">
+        <div class="trh-num">${number}</div>
+        <div class="trh-done">
+          <button class="secondary btn-done ${it.done?'active':''}" title="${it.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${it.id}')">${it.done?'✓':'○'}</button>
+        </div>
+        <div class="trh-title">
+          <a href="#/meetings/${meeting.id}/items/${it.id}" class="top-row-title" style="${it.done?'opacity:.6;':''}">${SV.util.esc(it.title)}</a>
+          ${(it.timerElapsedMs||it.timerRunningSince) ? `<span class="muted small"> · ⏱ ${SV.timer.fmt(SV.timer.liveElapsedMs(it))}</span>` : ``}
+          <div class="small muted">
+            ${it.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
+            ${it.status!=='normal' ? (it.status==='verschoben' && it.verschobenZuAgendaId
+              ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[it.verschobenZuAgendaId]||"?")}</span>`
+              : `<span class="tag status">${STATUS_LABEL[it.status]}</span>`) : ``}
+          </div>
+        </div>
+        <div class="top-row-actions">
+          <button class="secondary" title="${SV.t('tip_move_up')}" onclick="SV.actions.moveItem('meeting','${meeting.id}','${it.id}','up')">↑</button>
+          <button class="secondary" title="${SV.t('tip_move_down')}" onclick="SV.actions.moveItem('meeting','${meeting.id}','${it.id}','down')">↓</button>
+        </div>
+      </div>
+      ${it.status==='normal' ? moveForm(it) : ``}
+    </div>`).join("");
+
+  // ---- rechte Spalte: Detailansicht des ausgewaehlten TOPs (oder Hinweis) ----
+  let rightHtml = `<div class="split-right-empty">${SV.t("hint_select_top")}</div>`;
+  if(item){
+    if(SV.model.ensureProtokollBlock(item)) await SV.store.saveMeeting(teamId, meeting);
+
+    const timerBar = `
+      <div id="runningTimerBar" class="card" style="background:${item.timerRunningSince?'#fff3da':'#f5f6f7'}; border-color:${item.timerRunningSince?'#e0c48c':'var(--border)'}; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="margin:0;">⏱</strong>
+        <span id="runningTimerDisplay" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.1rem; font-weight:600; ${item.timerRunningSince?'color:#8a5a00;':''}">${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>
+        <button class="secondary" style="margin-left:auto;" onclick="SV.actions.toggleItemTimer('${meeting.id}','${item.id}')">${item.timerRunningSince?SV.t("btn_timer_stop_bar"):SV.t("tip_timer_start")}</button>
       </div>`;
 
-  const itemHtml = numbered.map(({item,number,depth})=>`
-    <div class="top-block ${depth?'sub':''} ${item.done?'done':''} ${item.status!=='normal'?'inactive':''}" id="top-${item.id}">
-      <div class="row" style="align-items:center;">
-        <div style="flex:0; font-weight:600; min-width:36px;">${number}</div>
-        <div style="flex:0;">
-          <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
-        </div>
-        <div>
-          <a href="#/meetings/${meeting.id}/items/${item.id}" style="font-weight:600; ${item.done?'opacity:.6;':''}">${SV.util.esc(item.title)}</a>
-          ${(item.timerElapsedMs||item.timerRunningSince) ? `<span class="muted small"> · ⏱ ${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>` : ``}
-        </div>
-      </div>
-      <div class="small muted" style="margin-top:2px;">
-        ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-        ${item.status!=='normal' ? (item.status==='verschoben' && item.verschobenZuAgendaId
-          ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[item.verschobenZuAgendaId]||"?")}</span>`
-          : `<span class="tag status">${STATUS_LABEL[item.status]}</span>`) : ``}
-      </div>
-      ${actionsRow(item)}
+    // Inhaltsabhaengige Abschnitte (Version 1.8.0): Vorbereitung und das
+    // Haupt-Meeting-Protokoll werden immer direkt angezeigt (kein Button
+    // notwendig); Anhaenge und Antraege/Beschluesse werden angezeigt, wenn
+    // schon etwas vorhanden ist, sonst stehen sie hinter ihrem eigenen
+    // (ohnehin vorhandenen) Aufklapp-Button; Aufgaben und "weitere
+    // Textfelder" stehen IMMER hinter einem Button, unabhaengig vom Inhalt.
+    const prepBlock = (item.blocks||[]).find(b=>b.kind==="prep");
+    const mainProtokollBlock = (item.blocks||[]).find(b=>b.kind==="protokoll");
+    const extraBlocks = (item.blocks||[]).filter(b=> b!==prepBlock && b!==mainProtokollBlock);
+    const prepHtml = prepBlock ? SV.views._blockRow("meeting", meeting.id, item, prepBlock, true) : "";
+    const protokollHtml = mainProtokollBlock ? SV.views._blockRow("meeting", meeting.id, item, mainProtokollBlock, true) : "";
+    const extraRows = extraBlocks.map(b=> SV.views._blockRow("meeting", meeting.id, item, b, true)).join("");
+    const extraTrash = (item.geloeschte_blocks||[]).length ? `
+      <details><summary class="small">${SV.t("deleted_blocks_summary", item.geloeschte_blocks.length)}</summary>
+        ${item.geloeschte_blocks.map(b=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((b.content||"").slice(0,60))}…
+          <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('meeting','${meeting.id}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
+      </details>` : "";
+    const extraAddForm = `
+      <div style="margin-top:6px;">
+        <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
+        <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('meeting','${meeting.id}','${item.id}','newblk-${item.id}')">${extraBlocks.length?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
+      </div>`;
+    const extraBlocksSection = `
       <details>
-        <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_show_details")}</span><span class="lbl-open">${SV.t("btn_hide_details")}</span></summary>
-        <div style="margin-top:6px;">
-          ${SV.views.renderBlocksSection("meeting", meeting.id, item, true)}
-          ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true)}
-          ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
-          ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true)}
+        <summary class="btn-toggle"><span class="lbl-closed">${SV.t("summary_more_fields")}</span><span class="lbl-open">${SV.t("summary_more_fields")}</span></summary>
+        <div style="margin-top:6px;">${extraRows}${extraTrash}${extraAddForm}</div>
+      </details>`;
+
+    rightHtml = `
+      <p><a href="javascript:void(0)" onclick="SV.actions.leaveMeetingItem('${meeting.id}')">${SV.t("back_to_meeting_items")}</a></p>
+      ${timerBar}
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <div style="flex:0;">
+            <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
+          </div>
+          <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}" style="${item.done?'opacity:.6;':''}"></div>
+          <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('meeting','${meeting.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
         </div>
-      </details>
-    </div>`).join("");
+        <div class="small muted" style="margin-top:2px;">
+          ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
+          ${item.status!=='normal' ? (item.status==='verschoben' && item.verschobenZuAgendaId
+            ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[item.verschobenZuAgendaId]||"?")}</span>`
+            : `<span class="tag status">${STATUS_LABEL[item.status]}</span>`) : ``}
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','out')">←</button>
+          <button class="secondary" onclick="SV.actions.indentItem('meeting','${meeting.id}','${item.id}','in')">→</button>
+          <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
+          ${item.status==='normal'
+            ? `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
+            : `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
+          <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
+        </div>
+      </div>
+      <div class="card">${prepHtml}</div>
+      <div class="card">${protokollHtml}</div>
+      ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true, (item.anhaenge||[]).length>0)}
+      ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true, (item.antraege||[]).length>0)}
+      ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
+      ${extraBlocksSection}
+    `;
+  }
 
   const trashItems = (meeting.geloeschte_items||[]).length ? `
     <div class="card"><details><summary>${SV.t("deleted_items_summary", meeting.geloeschte_items.length)}</summary>
@@ -2671,6 +2835,10 @@ SV.views.meetingRun = async function(app, meetingId){
         <button class="secondary" style="margin-left:8px;" onclick="SV.actions.restoreItem('meeting','${meeting.id}','${it.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details></div>` : "";
 
+  // Version 1.9.0: die Zweiteilung braucht etwas mehr Breite als die sonst
+  // einspaltigen Ansichten - #app wird hier gezielt verbreitert (und bei der
+  // naechsten Navigation in SV.router.go() wieder zurueckgesetzt).
+  app.style.maxWidth = "1100px";
   app.innerHTML = `
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
     <div class="card">
@@ -2688,7 +2856,11 @@ SV.views.meetingRun = async function(app, meetingId){
         <span class="small muted" style="margin:0;">${SV.t("label_auto_timer")}</span>
       </label>
     </div>
-    ${itemHtml || `<p class="muted">${SV.t("no_items_yet")}</p>`}
+    ${numbered.length ? `
+    <div class="meeting-split ${item?'has-selection':''}">
+      <div class="split-left">${leftRowsHtml}</div>
+      <div class="split-right">${rightHtml}</div>
+    </div>` : `<p class="muted">${SV.t("no_items_yet")}</p>`}
     <div class="card">
       <div class="row">
         <div><label>${SV.t("new_agenda_item_label")}</label><input type="text" id="newItemTitle"></div>
@@ -2703,136 +2875,7 @@ SV.views.meetingRun = async function(app, meetingId){
     </div>
   `;
   SV.util.installAutoGrow(app);
-};
-
-/* ---------- TOP-Detailansicht (Version 1.7.0, bevorzugte Sitzungsansicht) ---------- */
-SV.views.meetingItemDetail = async function(app, meetingId, itemId){
-  const teamId = SV.state.currentTeamId;
-  let meeting = await SV.store.getMeeting(teamId, meetingId);
-  if(!meeting){ app.innerHTML = `<div class="card">${SV.t("meeting_not_found")} <a href="#/meetings">${SV.t("back_generic")}</a></div>`; return; }
-  if(meeting.status === "abgeschlossen") return SV.views.meetingView(app, meeting);
-  let item = (meeting.items||[]).find(x=>x.id===itemId);
-  if(!item){
-    app.innerHTML = `<div class="card">${SV.t("item_not_found")} <a href="javascript:void(0)" onclick="SV.actions.leaveMeetingItem('${meeting.id}')">${SV.t("back_to_meeting_items")}</a></div>`;
-    return;
-  }
-
-  if(SV.model.ensureProtokollBlock(item)) await SV.store.saveMeeting(teamId, meeting);
-
-  // Uhr automatisch starten (sofern Einstellung aktiv und kein anderer TOP-Timer
-  // dieser Sitzung laeuft) - ohne bereits vorhandene Zeit zu verwerfen, damit
-  // ein erneutes Oeffnen die Uhr wie gewünscht einfach weiterlaufen laesst. NUR
-  // beim frischen Oeffnen dieses TOPs pruefen, nicht bei jedem Re-Render dieser
-  // Ansicht (sonst wuerde z.B. das manuelle Stoppen ueber den Balken die Uhr
-  // durch den folgenden Re-Render sofort wieder automatisch starten).
-  const freshOpen = SV.state._autoStartDoneForItem !== item.id;
-  if(freshOpen){
-    SV.state._autoStartDoneForItem = item.id;
-    const runningElsewhere = (meeting.items||[]).some(it=>it.id!==item.id && it.timerRunningSince);
-    // Ein bereits als "bearbeitet" markierter TOP startet beim erneuten
-    // Oeffnen die Uhr NICHT automatisch weiter (Version 1.8.0) - sie bleibt
-    // stehen, laesst sich aber ueber den Timer-Balken jederzeit manuell
-    // wieder starten.
-    if(SV.settings.autoStartTimer && !item.done && !item.timerRunningSince && !runningElsewhere){
-      await SV.actions._mutate("meeting", meetingId, (c)=>{
-        const it = c.items.find(x=>x.id===item.id);
-        if(it && !it.timerRunningSince) it.timerRunningSince = SV.util.nowIso();
-      });
-      meeting = await SV.store.getMeeting(teamId, meetingId);
-      item = meeting.items.find(x=>x.id===itemId);
-    }
-  }
-
-  const STATUS_LABEL = {normal:SV.t("status_label_normal"), verschoben:SV.t("status_label_verschoben"), gestrichen:SV.t("status_label_gestrichen")};
-
-  // Fuer das "Verschieben"-Formular, wie in der TOP-Liste (SV.views.meetingRun).
-  const agendas = await SV.store.listAgendas(teamId);
-  const agendaTitleById = {}; agendas.forEach(a=> agendaTitleById[a.id] = a.title || SV.t("no_title"));
-  const moveForm = `
-    <details class="move-form">
-      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("btn_move_to_agenda")}</span><span class="lbl-open">${SV.t("btn_move_to_agenda")}</span></summary>
-      <div style="margin-top:6px;">
-        <label>${SV.t("label_move_target_agenda")}</label>
-        <select id="movesel-${item.id}">
-          <option value="">—</option>
-          ${agendas.map(a=>`<option value="${a.id}">${SV.util.esc(a.title)||SV.t("no_title")}</option>`).join("")}
-          <option value="__new__">${SV.t("opt_new_agenda")}</option>
-        </select>
-        <label style="margin-top:4px;">${SV.t("label_new_agenda_title")}</label>
-        <input type="text" id="movetitle-${item.id}" placeholder="${SV.t("placeholder_agenda_title")}">
-        <button class="secondary" style="margin-top:6px;" onclick="SV.actions.moveItemToAgenda('${meeting.id}','${item.id}','movesel-${item.id}','movetitle-${item.id}')">${SV.t("btn_confirm_move")}</button>
-      </div>
-    </details>`;
-
-  const timerBar = `
-    <div id="runningTimerBar" class="card" style="background:${item.timerRunningSince?'#fff3da':'#f5f6f7'}; border-color:${item.timerRunningSince?'#e0c48c':'var(--border)'}; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <strong style="margin:0;">⏱</strong>
-      <span id="runningTimerDisplay" style="font-family:ui-monospace,Menlo,Consolas,monospace; font-size:1.1rem; font-weight:600; ${item.timerRunningSince?'color:#8a5a00;':''}">${SV.timer.fmt(SV.timer.liveElapsedMs(item))}</span>
-      <button class="secondary" style="margin-left:auto;" onclick="SV.actions.toggleItemTimer('${meeting.id}','${item.id}')">${item.timerRunningSince?SV.t("btn_timer_stop_bar"):SV.t("tip_timer_start")}</button>
-    </div>`;
-
-  // Inhaltsabhaengige Abschnitte (Version 1.8.0): Vorbereitung und das
-  // Haupt-Meeting-Protokoll werden immer direkt angezeigt (kein Button
-  // notwendig); Anhaenge und Antraege/Beschluesse werden angezeigt, wenn
-  // schon etwas vorhanden ist, sonst stehen sie hinter ihrem eigenen
-  // (ohnehin vorhandenen) Aufklapp-Button; Aufgaben und "weitere
-  // Textfelder" stehen IMMER hinter einem Button, unabhaengig vom Inhalt.
-  const prepBlock = (item.blocks||[]).find(b=>b.kind==="prep");
-  const mainProtokollBlock = (item.blocks||[]).find(b=>b.kind==="protokoll");
-  const extraBlocks = (item.blocks||[]).filter(b=> b!==prepBlock && b!==mainProtokollBlock);
-  const prepHtml = prepBlock ? SV.views._blockRow("meeting", meeting.id, item, prepBlock, true) : "";
-  const protokollHtml = mainProtokollBlock ? SV.views._blockRow("meeting", meeting.id, item, mainProtokollBlock, true) : "";
-  const extraRows = extraBlocks.map(b=> SV.views._blockRow("meeting", meeting.id, item, b, true)).join("");
-  const extraTrash = (item.geloeschte_blocks||[]).length ? `
-    <details><summary class="small">${SV.t("deleted_blocks_summary", item.geloeschte_blocks.length)}</summary>
-      ${item.geloeschte_blocks.map(b=>`<div class="small muted" style="margin:4px 0;">${SV.util.esc((b.content||"").slice(0,60))}…
-        <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('meeting','${meeting.id}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
-    </details>` : "";
-  const extraAddForm = `
-    <div style="margin-top:6px;">
-      <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
-      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('meeting','${meeting.id}','${item.id}','newblk-${item.id}')">${extraBlocks.length?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
-    </div>`;
-  const extraBlocksSection = `
-    <details>
-      <summary class="btn-toggle"><span class="lbl-closed">${SV.t("summary_more_fields")}</span><span class="lbl-open">${SV.t("summary_more_fields")}</span></summary>
-      <div style="margin-top:6px;">${extraRows}${extraTrash}${extraAddForm}</div>
-    </details>`;
-
-  app.innerHTML = `
-    <p><a href="javascript:void(0)" onclick="SV.actions.leaveMeetingItem('${meeting.id}')">${SV.t("back_to_meeting_items")}</a></p>
-    ${timerBar}
-    <div class="card">
-      <div class="row" style="align-items:center;">
-        <div style="flex:0;">
-          <button class="secondary btn-done ${item.done?'active':''}" title="${item.done?SV.t('tip_mark_undone'):SV.t('tip_mark_done')}" onclick="SV.actions.toggleItemDone('${meeting.id}','${item.id}')">${item.done?'✓':'○'}</button>
-        </div>
-        <div><input type="text" id="title-${item.id}" value="${SV.util.esc(item.title)}" style="${item.done?'opacity:.6;':''}"></div>
-        <div style="flex:0;"><button class="secondary" onclick="SV.actions.editItemTitle('meeting','${meeting.id}','${item.id}','title-${item.id}')">${SV.t("btn_save")}</button></div>
-      </div>
-      <div class="small muted" style="margin-top:2px;">
-        ${item.public?``:`<span class="tag">${SV.t("tag_not_public")}</span>`}
-        ${item.status!=='normal' ? (item.status==='verschoben' && item.verschobenZuAgendaId
-          ? `<span class="tag status">${SV.t("tag_moved_to", agendaTitleById[item.verschobenZuAgendaId]||"?")}</span>`
-          : `<span class="tag status">${STATUS_LABEL[item.status]}</span>`) : ``}
-      </div>
-      <div class="actions">
-        <button class="secondary" onclick="SV.actions.toggleItemPublic('meeting','${meeting.id}','${item.id}')">${item.public?SV.t("btn_mark_private"):SV.t("btn_mark_public")}</button>
-        ${item.status==='normal'
-          ? `${moveForm}<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','gestrichen')">${SV.t("btn_mark_cancelled")}</button>`
-          : `<button class="secondary" onclick="SV.actions.setItemStatus('${meeting.id}','${item.id}','normal')">${SV.t("btn_reset_normal")}</button>`}
-        <button class="danger" onclick="SV.actions.deleteItem('meeting','${meeting.id}','${item.id}')">${SV.t("btn_delete")}</button>
-      </div>
-    </div>
-    <div class="card">${prepHtml}</div>
-    <div class="card">${protokollHtml}</div>
-    ${SV.views.renderAttachmentsSection("meeting", meeting.id, item, true, (item.anhaenge||[]).length>0)}
-    ${SV.views.renderAntraegeSection("meeting", meeting.id, item, true, (item.antraege||[]).length>0)}
-    ${SV.views.renderTasksSection("meeting", meeting.id, item, true)}
-    ${extraBlocksSection}
-  `;
-  SV.util.installAutoGrow(app);
-  SV.timer.startTickForMeeting(meeting);
+  if(item) SV.timer.startTickForMeeting(meeting);
 };
 
 SV.actions.leaveMeetingItem = async function(meetingId){
