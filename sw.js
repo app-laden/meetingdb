@@ -4,7 +4,7 @@
 // index.html aus dem Browser-Cache uebernommen wird; eigener Cache-Name
 // mit App-Praefix; beim Aktivieren nur eigene alte Caches loeschen.
 
-const VERSION = "1.12.0";
+const VERSION = "1.13.0";
 const CACHE_NAME = "mdb-cache-" + VERSION;
 
 const FILES = [

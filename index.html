@@ -184,7 +184,16 @@ textarea.fmt{min-height:4.6em;}
 /* Version 1.11.0: noch nicht gespeicherte Eingaben sichtbar machen */
 .unsaved{border-color:#e0a23c !important; background:#fffaf0 !important;}
 .unsaved-hint{display:none; font-size:.75rem; color:#a0650b; margin-top:2px;}
-textarea.unsaved + .unsaved-hint{display:block;}
+textarea.unsaved + .unsaved-hint, .rte.unsaved + .unsaved-hint{display:block;}
+/* Version 1.13.0: direkt formatiertes Eingabefeld */
+.rte{width:100%; min-height:4.6em; padding:8px 10px; border:1px solid var(--border); border-radius:7px;
+  font-size:.95rem; background:#fff; color:var(--text); line-height:1.45; outline:none;
+  overflow-wrap:anywhere; -webkit-user-select:text; user-select:text;}
+.rte:focus{border-color:var(--blue);}
+.rte:empty:before{content:attr(data-placeholder); color:var(--muted);}
+.rte ul, .rte ol{margin:2px 0; padding-left:22px;}
+.rte li{margin:1px 0;}
+.rte ul ul, .rte ol ul, .rte li ul{list-style:"– ";}
 /* Version 1.12.0: Formular fuer neue Aufgabe/Antrag erst nach Klick */
 details.new-entry-toggle{margin-top:8px;}
 details.new-entry-toggle > summary{list-style:none; display:inline-block;}
@@ -238,7 +247,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.12.0";
+SV.VERSION = "1.13.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -464,6 +473,7 @@ SV.i18n = {
       label_intro_note: "Bemerkungen",
       pdf_teilnehmer_label: "Teilnehmer:",
       toast_saved: "Gespeichert.",
+      label_wysiwyg: "Formatierung beim Schreiben direkt anzeigen (fett, kursiv, Listen) – gilt für dieses Gerät",
       preview_hint: "Protokoll-Vorschau als PDF, z. B. zur Abstimmung vor dem Abschließen (als „Entwurf“ gekennzeichnet).",
       btn_preview_public: "Vorschau öffentliche Fassung",
       btn_preview_full: "Vorschau vollständige Fassung",
@@ -591,7 +601,7 @@ SV.i18n = {
         <p>Eine Agenda ist eine Vorlage mit Tagesordnungspunkten (Titel immer Pflicht, Datum optional – zum Termine-Planen). Mit "Sitzung starten" wird daraus eine laufende Sitzung – die Agenda selbst bleibt dabei unverändert als Vorlage bestehen und erscheint danach im Bereich "Alte Agenden".</p>
         <p>Tagesordnungspunkte lassen sich mit ← / → eine Ebene höher/tiefer stufen, in laufenden Sitzungen zusätzlich mit ↑ / ↓ verschieben. Innerhalb eines Punkts: Textblöcke (mit "-" oder "1., 2., ..." für Aufzählungen, auch verschachtelt), Anträge/Beschlüsse mit Abstimmungsergebnis, und Aufgaben mit Verantwortlichem und Termin.</p>
         <h3>Textfelder formatieren</h3>
-        <p>Über jedem größeren Textfeld steht eine kleine Leiste: <b>F</b> (fett), <i>K</i> (kursiv), • Liste, 1. Liste sowie ⇤/⇥ zum Aus-/Einrücken (tiefere Listenebene). Im Textfeld selbst erscheinen die Markierungen als <code>**fett**</code> und <code>*kursiv*</code>, Listen als „- “ bzw. „1. “ – im abgeschlossenen Protokoll und im PDF wird alles formatiert dargestellt. In einer Liste setzt Enter automatisch den nächsten Punkt, Enter auf einem leeren Punkt beendet die Liste, Tab/Umschalt+Tab ändern die Ebene.</p>
+        <p>Über jedem größeren Textfeld steht eine kleine Leiste: <b>F</b> (fett), <i>K</i> (kursiv), • Liste, 1. Liste sowie ⇤/⇥ zum Aus-/Einrücken (tiefere Listenebene). Im Textfeld selbst erscheinen die Markierungen als <code>**fett**</code> und <code>*kursiv*</code>, Listen als „- “ bzw. „1. “ – im abgeschlossenen Protokoll und im PDF wird alles formatiert dargestellt. Mit dem Häkchen „Formatierung beim Schreiben direkt anzeigen“ (in der Sitzung bzw. Agenda, gilt pro Gerät) sieht man fett, kursiv und Listen schon beim Tippen; eingefügter Text wird dabei immer ohne fremde Formatierung übernommen. In einer Liste setzt Enter automatisch den nächsten Punkt, Enter auf einem leeren Punkt beendet die Liste, Tab/Umschalt+Tab ändern die Ebene.</p>
         <h3>Nicht gespeicherte Eingaben</h3>
         <p>Was du in ein Feld tippst, bleibt erhalten, auch wenn du zwischendurch etwas anderes speicherst oder einen anderen TOP öffnest. Solche Felder sind orange markiert („Noch nicht gespeichert“), bis du sie speicherst. Erst beim Schließen oder Neuladen der App gehen sie verloren – vorher fragt der Browser nach.</p>
         <h3>Abschließen &amp; wieder öffnen</h3>
@@ -794,6 +804,7 @@ SV.i18n = {
       label_intro_note: "Notes",
       pdf_teilnehmer_label: "Participants:",
       toast_saved: "Saved.",
+      label_wysiwyg: "Show formatting directly while typing (bold, italic, lists) – applies to this device",
       preview_hint: "Preview the minutes as PDF, e.g. for review before completing (marked as \"draft\").",
       btn_preview_public: "Preview public version",
       btn_preview_full: "Preview complete version",
@@ -921,7 +932,7 @@ SV.i18n = {
         <p>An agenda is a template with agenda items (title always required, date optional – for scheduling). "Start meeting" turns it into a running meeting – the agenda itself stays unchanged as a template and afterwards appears under "Old agendas".</p>
         <p>Agenda items can be promoted/demoted one level with ← / →, and in running meetings also reordered with ↑ / ↓. Within an item: text blocks (with "-" or "1., 2., ..." for lists, nesting allowed), motions/resolutions with a voting outcome, and tasks with a person responsible and a due date.</p>
         <h3>Formatting text fields</h3>
-        <p>Above each larger text field there is a small bar: <b>B</b> (bold), <i>I</i> (italic), • List, 1. List and ⇤/⇥ to outdent/indent (deeper list level). In the field itself the marks appear as <code>**bold**</code> and <code>*italic*</code>, lists as "- " or "1. " – the completed minutes and the PDF show everything formatted. Inside a list, Enter starts the next item, Enter on an empty item ends the list, Tab/Shift+Tab change the level.</p>
+        <p>Above each larger text field there is a small bar: <b>B</b> (bold), <i>I</i> (italic), • List, 1. List and ⇤/⇥ to outdent/indent (deeper list level). In the field itself the marks appear as <code>**bold**</code> and <code>*italic*</code>, lists as "- " or "1. " – the completed minutes and the PDF show everything formatted. With the checkbox "Show formatting directly while typing" (in the meeting or agenda, per device) bold, italic and lists are visible while typing; pasted text is always inserted without foreign formatting. Inside a list, Enter starts the next item, Enter on an empty item ends the list, Tab/Shift+Tab change the level.</p>
         <h3>Unsaved input</h3>
         <p>Whatever you type into a field is kept, even if you save something else in between or open another agenda item. Such fields are marked orange ("Not saved yet") until you save them. They are only lost when closing or reloading the app – the browser asks first.</p>
         <h3>Completing &amp; reopening</h3>
@@ -1523,6 +1534,9 @@ SV.editor = {
   },
   // Textarea mit Formatierungsleiste.
   ta(id, value, placeholder){
+    if(SV.settings.wysiwyg){
+      return `<div class="fmt-wrap">${SV.editor.toolbar(id)}<div id="${id}" class="rte" contenteditable="true" spellcheck="true" ${placeholder?`data-placeholder="${SV.util.esc(placeholder)}"`:""}>${SV.rte.mdToHtml(value||"")}</div><div class="unsaved-hint">${SV.t("hint_unsaved")}</div></div>`;
+    }
     return `<div class="fmt-wrap">${SV.editor.toolbar(id)}<textarea id="${id}" class="fmt" ${placeholder?`placeholder="${SV.util.esc(placeholder)}"`:""}>${SV.util.esc(value||"")}</textarea><div class="unsaved-hint">${SV.t("hint_unsaved")}</div></div>`;
   },
   _lineRange(val, start, end){
@@ -1604,6 +1618,7 @@ SV.editor = {
   },
   exec(taId, cmd){
     const ta = SV.util.byId(taId); if(!ta) return;
+    if(ta.classList.contains("rte")) return SV.rte.exec(ta, cmd);
     if(cmd==="bold") return SV.editor.wrapInline(ta, "**");
     if(cmd==="italic") return SV.editor.wrapInline(ta, "*");
     if(cmd==="ul" || cmd==="ol") return SV.editor.toggleList(ta, cmd);
@@ -1642,6 +1657,275 @@ SV.editor = {
   },
 };
 
+/* ===================== Direkt formatiertes Eingabefeld (Version 1.13.0) =====================
+   Optional (Einstellung "Formatierung beim Schreiben direkt anzeigen", pro
+   Geraet): statt einer Textarea ein contenteditable-Feld, in dem fett,
+   kursiv und Listen sofort so aussehen wie spaeter im Protokoll.
+   Gespeichert wird UNVERAENDERT das bisherige Textformat (**fett**, *kursiv*,
+   "- "/"1. ", 2 Leerzeichen je Ebene): beim Anzeigen wird es in HTML
+   umgewandelt (mdToHtml), beim Auslesen zurueck (htmlToMd). Damit das
+   Feld fuer den uebrigen Code wie eine Textarea aussieht, bekommt es eine
+   .value-Eigenschaft (install) - alle Speicher-Aktionen und die
+   Entwurfs-Sicherung (SV.drafts) funktionieren dadurch ohne Aenderung. */
+SV.rte = {
+  // --- Text -> HTML ---
+  mdToHtml(md){
+    const segs = SV.textformat.parseBlockSegments(md||"");
+    let html = "";
+    let i = 0;
+    while(i < segs.length){
+      const seg = segs[i];
+      if(seg.type === "text"){
+        let t = seg.text;
+        if(i === 0) t = t.replace(/^\n+/, "");
+        if(i === segs.length-1) t = t.replace(/\n+$/, "");
+        // leere Zeilen zwischen zwei Listen/Absaetzen bleiben erhalten, nur am
+        // Anfang/Ende werden sie (wie beim Speichern) entfernt
+        if(t !== "" || (i > 0 && i < segs.length-1)){
+          t.split("\n").forEach(line=>{ html += `<div>${line ? SV.textformat.inlineHtml(line) : "<br>"}</div>`; });
+        }
+        i++; continue;
+      }
+      const items = [];
+      // Die Aufzaehlungs-Erkennung rueckt eine Liste direkt nach einer Zeile
+      // mit ":" automatisch eine Ebene ein - im Eingabefeld zaehlt nur die
+      // tatsaechliche Einrueckung, daher relativ zur flachsten Ebene.
+      let base = Infinity;
+      for(let k=i; k<segs.length && segs[k].type==="list"; k++) base = Math.min(base, segs[k].depth);
+      while(i < segs.length && segs[i].type === "list"){
+        const sg = segs[i];
+        sg.items.forEach((t,k)=> items.push({depth: sg.depth - base, ol: !!(sg.nums && sg.nums[k]), text: t}));
+        i++;
+      }
+      html += SV.rte.buildList(items);
+    }
+    return html.replace(/^<div><br><\/div>$/, "");
+  },
+  buildList(items){
+    let html = "";
+    const stack = [];
+    items.forEach(it=>{
+      const d = Math.min(it.depth, stack.length);   // hoechstens eine Ebene tiefer
+      const tag = it.ol ? "ol" : "ul";
+      while(stack.length > d+1) html += `</li></${stack.pop()}>`;
+      if(stack.length === d+1){
+        if(stack[d] !== tag){ html += `</li></${stack.pop()}><${tag}><li>`; stack.push(tag); }
+        else html += `</li><li>`;
+      } else {
+        html += `<${tag}><li>`; stack.push(tag);
+      }
+      html += SV.textformat.inlineHtml(it.text) || "<br>";
+    });
+    while(stack.length) html += `</li></${stack.pop()}>`;
+    return html;
+  },
+  // --- HTML -> Text ---
+  _wrap(marker, s){
+    const lead = s.match(/^\s*/)[0];
+    const rest = s.slice(lead.length);
+    const trail = rest.match(/\s*$/)[0];
+    const core = rest.slice(0, rest.length - trail.length);
+    return core ? lead + marker + core + marker + trail : s;
+  },
+  _inline(node, st){
+    st = st || {b:false, i:false};
+    if(node.nodeType === 3) return node.data.replace(/\u00a0/g, " ").replace(/[\u200b\ufeff\u2063]/g, "").replace(/\n/g, " ");
+    if(node.nodeType !== 1) return "";
+    const tag = node.tagName;
+    if(tag === "BR") return " ";
+    const style = node.style || {};
+    const fw = style.fontWeight;
+    const isB = tag==="B" || tag==="STRONG" || fw==="bold" || (parseInt(fw,10) >= 600);
+    const isI = tag==="I" || tag==="EM" || style.fontStyle==="italic";
+    // nur die aeusserste Auszeichnung zaehlt (fett+kursiv gleichzeitig wird
+    // vom Textformat nicht unterstuetzt)
+    const newB = isB && !st.b && !st.i;
+    const newI = isI && !st.i && !st.b && !newB;
+    const inner = Array.from(node.childNodes).map(c=> SV.rte._inline(c, {b: st.b||newB, i: st.i||newI})).join("");
+    if(newB) return SV.rte._wrap("**", inner);
+    if(newI) return SV.rte._wrap("*", inner);
+    return inner;
+  },
+  htmlToMd(root){
+    const out = [];
+    let cur = null;
+    const pushCur = ()=>{ if(cur !== null){ out.push(cur); cur = null; } };
+    const addText = (txt)=>{
+      const parts = txt.split("\n");
+      cur = (cur||"") + parts[0];
+      for(let k=1;k<parts.length;k++){ out.push(cur); cur = parts[k]; }
+    };
+    const listWalk = (list, depth)=>{
+      let n = 1;
+      const ol = list.tagName === "OL";
+      Array.from(list.children).forEach(c=>{
+        if(c.tagName==="UL" || c.tagName==="OL"){ listWalk(c, depth+1); return; }
+        if(c.tagName!=="LI") return;
+        let text = "";
+        const nested = [];
+        Array.from(c.childNodes).forEach(cc=>{
+          if(cc.nodeType===1 && (cc.tagName==="UL" || cc.tagName==="OL")) nested.push(cc);
+          else text += SV.rte._inline(cc);
+        });
+        text = text.replace(/\s+/g, " ").trim();
+        out.push("  ".repeat(depth) + (ol ? (n++)+". " : "- ") + text);
+        nested.forEach(x=> listWalk(x, depth+1));
+      });
+    };
+    const walk = (node)=>{
+      Array.from(node.childNodes).forEach(c=>{
+        if(c.nodeType === 3){ addText(c.data.replace(/\u00a0/g, " ").replace(/[\u200b\ufeff\u2063]/g, "")); return; }
+        if(c.nodeType !== 1) return;
+        const t = c.tagName;
+        if(t === "BR"){ out.push(cur||""); cur = null; }
+        else if(t === "DIV" || t === "P" || t === "BLOCKQUOTE" || /^H[1-6]$/.test(t)){
+          pushCur();
+          const before = out.length;
+          walk(c);
+          if(cur === null && out.length === before) out.push("");
+          pushCur();
+        }
+        else if(t === "UL" || t === "OL"){ pushCur(); listWalk(c, 0); }
+        else { const s = SV.rte._inline(c); cur = (cur||"") + s; }
+      });
+    };
+    walk(root);
+    pushCur();
+    return SV.textformat.cleanBlockContent(out.join("\n").split("\n").map(l=>l.replace(/\s+$/,"")).join("\n"));
+  },
+  // .value wie bei einer Textarea
+  install(root){
+    SV.util.qsa(".rte", root||document).forEach(el=>{
+      if(el._rteInstalled) return;
+      el._rteInstalled = true;
+      Object.defineProperty(el, "value", {
+        configurable: true,
+        get(){ return SV.rte.htmlToMd(el); },
+        set(v){ el.innerHTML = SV.rte.mdToHtml(v||""); },
+      });
+    });
+  },
+  _inList(el){
+    const sel = window.getSelection();
+    if(!sel || !sel.rangeCount) return false;
+    let n = sel.anchorNode;
+    while(n && n !== el){ if(n.nodeType===1 && n.tagName==="LI") return true; n = n.parentNode; }
+    return false;
+  },
+  _ensureFocus(el){
+    const sel = window.getSelection();
+    if(document.activeElement !== el || !sel.rangeCount || !el.contains(sel.anchorNode)){
+      el.focus();
+      const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+      sel.removeAllRanges(); sel.addRange(r);
+    }
+  },
+  // Cursor-Position als Zeichen-Abstand vom Anfang merken/wiederherstellen:
+  // Listen-Befehle bauen die Struktur um und setzen den Cursor in manchen
+  // Browsern an den Zeilenanfang - der Text selbst bleibt dabei gleich.
+  _caretOffset(el){
+    const sel = window.getSelection();
+    if(!sel.rangeCount || !el.contains(sel.anchorNode)) return null;
+    const r = sel.getRangeAt(0);
+    if(!r.collapsed) return null;
+    const pre = document.createRange();
+    pre.selectNodeContents(el);
+    pre.setEnd(r.endContainer, r.endOffset);
+    return pre.toString().length;
+  },
+  _setCaret(el, offset){
+    if(offset === null) return;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let n, left = offset, last = null;
+    while((n = walker.nextNode())){
+      last = n;
+      if(left <= n.data.length){
+        const r = document.createRange(); r.setStart(n, left); r.collapse(true);
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        return;
+      }
+      left -= n.data.length;
+    }
+  },
+  // Unsichtbare Marke an der Cursor-Position einsetzen, Befehl ausfuehren,
+  // Cursor wieder an die Marke setzen und Marke entfernen.
+  _structural(el, command){
+    const MARK = "\u2063";
+    const sel = window.getSelection();
+    let marked = false;
+    if(sel.rangeCount && el.contains(sel.anchorNode) && sel.getRangeAt(0).collapsed){
+      const r = sel.getRangeAt(0);
+      const t = document.createTextNode(MARK);
+      r.insertNode(t);
+      r.setStartAfter(t); r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+      marked = true;
+    }
+    document.execCommand(command);
+    if(!marked) return;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let n;
+    while((n = walker.nextNode())){
+      const k = n.data.indexOf(MARK);
+      if(k < 0) continue;
+      n.data = n.data.slice(0,k) + n.data.slice(k+1);
+      const parent = n.parentNode;
+      if(n.data === "" && parent && parent.childNodes.length === 1 && parent.tagName === "LI") parent.appendChild(document.createElement("br"));
+      const r = document.createRange();
+      if(n.data === ""){ r.setStartBefore(n); n.remove(); } else r.setStart(n, k);
+      r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+      break;
+    }
+  },
+  exec(el, cmd){
+    SV.rte._ensureFocus(el);
+    try{ document.execCommand("styleWithCSS", false, false); }catch(e){}
+    if(cmd==="bold") document.execCommand("bold");
+    else if(cmd==="italic") document.execCommand("italic");
+    else if(cmd==="ul") SV.rte._structural(el, "insertUnorderedList");
+    else if(cmd==="ol") SV.rte._structural(el, "insertOrderedList");
+    else if(cmd==="indent"){ if(SV.rte._inList(el)) SV.rte._structural(el, "indent"); }
+    else if(cmd==="outdent"){ if(SV.rte._inList(el)) SV.rte._structural(el, "outdent"); }
+    el.dispatchEvent(new Event("input", {bubbles:true}));
+  },
+  _currentLi(el){
+    const sel = window.getSelection();
+    if(!sel.rangeCount) return null;
+    let n = sel.anchorNode;
+    while(n && n !== el){ if(n.nodeType===1 && n.tagName==="LI") return n; n = n.parentNode; }
+    return null;
+  },
+  onKeyDown(ev){
+    const el = ev.target;
+    if(!(el && el.classList && el.classList.contains("rte"))) return;
+    if(ev.key==="Tab" && !ev.metaKey && !ev.ctrlKey && !ev.altKey && SV.rte._inList(el)){
+      ev.preventDefault();
+      SV.rte._structural(el, ev.shiftKey ? "outdent" : "indent");
+      el.dispatchEvent(new Event("input", {bubbles:true}));
+      return;
+    }
+    // Enter auf einem leeren Listenpunkt: eine Ebene zurueck bzw. Liste beenden
+    if(ev.key==="Enter" && !ev.shiftKey && !ev.metaKey && !ev.ctrlKey && !ev.altKey && !ev.isComposing){
+      const li = SV.rte._currentLi(el);
+      if(li && li.textContent.replace(/[\u200b\u00a0\s]/g,"")==="" && !li.querySelector("ul,ol")){
+        ev.preventDefault();
+        document.execCommand("outdent");
+        el.dispatchEvent(new Event("input", {bubbles:true}));
+      }
+    }
+  },
+  // Eingefuegter Text immer als reiner Text (keine fremden Formatierungen,
+  // Schriftarten, Farben aus Word/Mail/Webseiten).
+  onPaste(ev){
+    const el = ev.target && ev.target.closest && ev.target.closest(".rte");
+    if(!el) return;
+    ev.preventDefault();
+    const text = (ev.clipboardData || window.clipboardData).getData("text/plain") || "";
+    document.execCommand("insertText", false, text);
+  },
+};
+
 /* ===================== Ungespeicherte Eingaben (Version 1.11.0) =====================
    Jede Eingabe in einem Feld der Agenda-/Sitzungsbearbeitung wird sofort im
    Arbeitsspeicher als Entwurf gemerkt (je Feld-Id). Zeichnet die App die Seite
@@ -1656,6 +1940,7 @@ SV.drafts = {
   trackable(el){
     if(!el || !el.id || !el.closest || !el.closest("#app")) return false;
     if(el.tagName==="TEXTAREA" || el.tagName==="SELECT") return true;
+    if(el.classList && el.classList.contains("rte")) return true;
     return el.tagName==="INPUT" && ["text","number","date"].includes(el.type);
   },
   track(el){
@@ -1681,13 +1966,16 @@ SV.drafts = {
 
 SV.editor.installGlobal = function(){
   document.addEventListener("input", (ev)=>{
-    SV.drafts.track(ev.target);
+    const rte = ev.target && ev.target.closest && ev.target.closest(".rte");
+    SV.drafts.track(rte || ev.target);
     if(ev.target && ev.target.tagName==="TEXTAREA") SV.util.autoGrow(ev.target);
   });
   document.addEventListener("change", (ev)=>{
     if(ev.target && ev.target.tagName==="SELECT") SV.drafts.track(ev.target);
   });
   document.addEventListener("keydown", SV.editor.onKeyDown);
+  document.addEventListener("keydown", SV.rte.onKeyDown);
+  document.addEventListener("paste", SV.rte.onPaste);
   // Formatierungsknoepfe: Fokus/Auswahl im Textfeld nicht verlieren
   document.addEventListener("mousedown", (ev)=>{ if(ev.target.closest && ev.target.closest(".fmt-btn")) ev.preventDefault(); });
   document.addEventListener("click", (ev)=>{
@@ -2262,17 +2550,25 @@ SV.settings = {
   exportMode: "perTeam",
   AUTO_TIMER_KEY: "mdb-auto-timer",
   autoStartTimer: true,
+  // Version 1.13.0: Formatierung beim Schreiben direkt anzeigen (pro Geraet)
+  WYSIWYG_KEY: "mdb-wysiwyg",
+  wysiwyg: false,
   init(){
     try{
       const saved = localStorage.getItem(SV.settings.EXPORT_MODE_KEY);
       if(saved==="single" || saved==="perTeam" || saved==="currentTeam") SV.settings.exportMode = saved;
       const savedAuto = localStorage.getItem(SV.settings.AUTO_TIMER_KEY);
       if(savedAuto!==null) SV.settings.autoStartTimer = savedAuto!=="0";
+      SV.settings.wysiwyg = localStorage.getItem(SV.settings.WYSIWYG_KEY)==="1";
     }catch(e){}
   },
   setExportMode(mode){
     SV.settings.exportMode = (mode==="single" || mode==="currentTeam") ? mode : "perTeam";
     try{ localStorage.setItem(SV.settings.EXPORT_MODE_KEY, SV.settings.exportMode); }catch(e){}
+  },
+  setWysiwyg(on){
+    SV.settings.wysiwyg = !!on;
+    try{ localStorage.setItem(SV.settings.WYSIWYG_KEY, SV.settings.wysiwyg ? "1" : "0"); }catch(e){}
   },
   setAutoStartTimer(on){
     SV.settings.autoStartTimer = !!on;
@@ -2378,6 +2674,7 @@ SV.router = {
       }
       // Version 1.11.0: ungespeicherte Eingaben wieder einsetzen, Textfelder
       // auf ihren Inhalt vergroessern.
+      SV.rte.install(app);
       SV.drafts.restore();
       SV.util.installAutoGrow(app);
       if(SV.state.scrollTarget){
@@ -2937,6 +3234,10 @@ SV.views.agendaEdit = async function(app, agendaId){
         <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editAgendaDate" value="${SV.util.esc(agenda.date)}"></div>
         <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
       </form>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
+        <input type="checkbox" ${SV.settings.wysiwyg?"checked":""} style="width:auto;" onchange="SV.actions.setWysiwyg(this.checked)">
+        <span class="small muted" style="margin:0;">${SV.t("label_wysiwyg")}</span>
+      </label>
     </div>
     <div class="card">
       <h2>${SV.t("agenda_items_h2")}</h2>
@@ -3309,6 +3610,10 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
         <input type="checkbox" ${SV.settings.autoStartTimer?"checked":""} style="width:auto;" onchange="SV.actions.setAutoStartTimer(this.checked)">
         <span class="small muted" style="margin:0;">${SV.t("label_auto_timer")}</span>
       </label>
+      <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
+        <input type="checkbox" ${SV.settings.wysiwyg?"checked":""} style="width:auto;" onchange="SV.actions.setWysiwyg(this.checked)">
+        <span class="small muted" style="margin:0;">${SV.t("label_wysiwyg")}</span>
+      </label>
     </div>
     ${numbered.length ? `
     <div class="meeting-split ${item?'has-selection':''}">
@@ -3371,10 +3676,24 @@ SV.actions.toggleShowTimerInProtocol = async function(meetingId, checked){
   // Kein volles Re-Render noetig (keine sichtbare Aenderung ausser der Checkbox selbst,
   // die bereits den richtigen Zustand zeigt) - so bleibt ein offenes Textfeld unangetastet.
 };
+// Version 1.13.0: haelt laufende TOP-Uhren an (Zeit wird aufsummiert).
+// onlyId: nur diesen TOP, sonst alle der Sitzung.
+SV.timer.stopIn = function(c, onlyId){
+  const nowMs = Date.now();
+  (c.items||[]).forEach(it=>{
+    if(onlyId && it.id!==onlyId) return;
+    if(it.timerRunningSince){
+      it.timerElapsedMs = (it.timerElapsedMs||0) + (nowMs - new Date(it.timerRunningSince).getTime());
+      it.timerRunningSince = null;
+    }
+  });
+};
 SV.actions.toggleItemDone = async function(meetingId, itemId){
   await SV.actions._mutate("meeting", meetingId, (c)=>{
     const it = (c.items||[]).find(x=>x.id===itemId);
     if(it) it.done = !it.done;
+    // Version 1.13.0: TOP als bearbeitet abhaken stoppt seine Uhr
+    if(it && it.done) SV.timer.stopIn(c, it.id);
   });
   SV.router.go();
 };
@@ -3406,11 +3725,16 @@ SV.actions.toggleItemTimer = async function(meetingId, itemId){
 // nicht im PDF landen.
 SV.actions.previewProtocol = async function(meetingId, full){
   if(SV.drafts.count()) SV.ui.toast(SV.t("toast_preview_unsaved"));
+  // Version 1.13.0: die Vorschau beendet die Zeitmessung (Uhr laeuft sonst
+  // waehrend der Protokoll-Abstimmung weiter)
+  let wasRunning = false;
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ wasRunning = (c.items||[]).some(it=>it.timerRunningSince); SV.timer.stopIn(c); });
   await SV.pdf.protocolPdf(meetingId, full);
+  if(wasRunning) SV.router.go();
 };
 SV.actions.completeMeeting = async function(meetingId){
   if(!await SV.ui.confirm(SV.t("confirm_complete_meeting"))) return;
-  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.status="abgeschlossen"; c.completed_at=SV.util.nowIso(); });
+  await SV.actions._mutate("meeting", meetingId, (c)=>{ SV.timer.stopIn(c); c.status="abgeschlossen"; c.completed_at=SV.util.nowIso(); });
   SV.router.go();
 };
 SV.actions.reopenMeeting = async function(meetingId){
@@ -3685,6 +4009,13 @@ SV.views.daten = async function(app){
 };
 SV.actions.setExportMode = function(mode){
   SV.settings.setExportMode(mode);
+  SV.router.go();
+};
+// Ungespeicherte Entwuerfe bleiben beim Umschalten erhalten (sie liegen als
+// Text in SV.drafts und werden nach dem Neuzeichnen ins jeweils andere
+// Eingabefeld eingesetzt).
+SV.actions.setWysiwyg = function(on){
+  SV.settings.setWysiwyg(on);
   SV.router.go();
 };
 SV.actions.setAutoStartTimer = function(on){
