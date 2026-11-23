@@ -185,6 +185,11 @@ textarea.fmt{min-height:4.6em;}
 .unsaved{border-color:#e0a23c !important; background:#fffaf0 !important;}
 .unsaved-hint{display:none; font-size:.75rem; color:#a0650b; margin-top:2px;}
 textarea.unsaved + .unsaved-hint{display:block;}
+/* Version 1.12.0: Formular fuer neue Aufgabe/Antrag erst nach Klick */
+details.new-entry-toggle{margin-top:8px;}
+details.new-entry-toggle > summary{list-style:none; display:inline-block;}
+details.new-entry-toggle > summary::-webkit-details-marker{display:none;}
+details.new-entry-toggle[open] > summary{display:none;}
 /* Version 1.11.0: Formular fuer neue Eintraege klar als eigener Kasten */
 .new-entry{border:1px dashed #b9c6d6; border-radius:8px; padding:10px 12px; margin-top:10px; background:#f8fbff;}
 .new-entry-title{font-size:.82rem; font-weight:600; color:var(--blue-dark); margin-bottom:6px;}
@@ -233,7 +238,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.11.0";
+SV.VERSION = "1.12.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -459,6 +464,12 @@ SV.i18n = {
       label_intro_note: "Bemerkungen",
       pdf_teilnehmer_label: "Teilnehmer:",
       toast_saved: "Gespeichert.",
+      preview_hint: "Protokoll-Vorschau als PDF, z. B. zur Abstimmung vor dem Abschließen (als „Entwurf“ gekennzeichnet).",
+      btn_preview_public: "Vorschau öffentliche Fassung",
+      btn_preview_full: "Vorschau vollständige Fassung",
+      toast_preview_unsaved: "Hinweis: Orange markierte, noch nicht gespeicherte Eingaben fehlen im PDF.",
+      pdf_draft_suffix: " · ENTWURF",
+      pdf_filename_draft_suffix: "_Entwurf",
       new_block_heading: "Neues Textfeld",
       new_task_heading: "Neue Aufgabe",
       new_antrag_heading: "Neuer Antrag/Beschluss",
@@ -584,7 +595,7 @@ SV.i18n = {
         <h3>Nicht gespeicherte Eingaben</h3>
         <p>Was du in ein Feld tippst, bleibt erhalten, auch wenn du zwischendurch etwas anderes speicherst oder einen anderen TOP öffnest. Solche Felder sind orange markiert („Noch nicht gespeichert“), bis du sie speicherst. Erst beim Schließen oder Neuladen der App gehen sie verloren – vorher fragt der Browser nach.</p>
         <h3>Abschließen &amp; wieder öffnen</h3>
-        <p>"Sitzung abschließen" sperrt das Protokoll gegen versehentliches Bearbeiten. Für nachträgliche Korrekturen lässt es sich über "Protokoll wieder öffnen" erneut bearbeitbar machen.</p>
+        <p>Vor dem Abschließen lässt sich das Protokoll unten in der Sitzung als PDF-Vorschau erzeugen (öffentliche oder vollständige Fassung, als „Entwurf“ gekennzeichnet) – z. B. zur Abstimmung. "Sitzung abschließen" sperrt das Protokoll gegen versehentliches Bearbeiten. Für nachträgliche Korrekturen lässt es sich über "Protokoll wieder öffnen" erneut bearbeitbar machen.</p>
         <h3>Beschlussliste &amp; Aufgaben</h3>
         <p>Die Beschlussliste zeigt alle Anträge/Beschlüsse des aktuellen Teams. Die Aufgabenliste zeigt Aufgaben teamübergreifend (über alle entsperrten Teams) mit Filtern, Status/Termin direkt bearbeitbar, und PDF-Export (Hoch-/Querformat wählbar).</p>
         <h3>Sprache</h3>
@@ -783,6 +794,12 @@ SV.i18n = {
       label_intro_note: "Notes",
       pdf_teilnehmer_label: "Participants:",
       toast_saved: "Saved.",
+      preview_hint: "Preview the minutes as PDF, e.g. for review before completing (marked as \"draft\").",
+      btn_preview_public: "Preview public version",
+      btn_preview_full: "Preview complete version",
+      toast_preview_unsaved: "Note: unsaved input (marked orange) is not included in the PDF.",
+      pdf_draft_suffix: " · DRAFT",
+      pdf_filename_draft_suffix: "_draft",
       new_block_heading: "New text field",
       new_task_heading: "New task",
       new_antrag_heading: "New motion/resolution",
@@ -908,7 +925,7 @@ SV.i18n = {
         <h3>Unsaved input</h3>
         <p>Whatever you type into a field is kept, even if you save something else in between or open another agenda item. Such fields are marked orange ("Not saved yet") until you save them. They are only lost when closing or reloading the app – the browser asks first.</p>
         <h3>Completing &amp; reopening</h3>
-        <p>"Complete meeting" locks the minutes against accidental editing. For later corrections, "Reopen minutes" makes it editable again.</p>
+        <p>Before completing, the minutes can be previewed as PDF at the bottom of the meeting (public or complete version, marked as "draft") – e.g. for review. "Complete meeting" locks the minutes against accidental editing. For later corrections, "Reopen minutes" makes it editable again.</p>
         <h3>Resolutions &amp; Tasks</h3>
         <p>The resolutions list shows all motions/resolutions of the current team. The tasks list shows tasks across teams (across all unlocked teams) with filters, status/due date directly editable, and PDF export (portrait/landscape selectable).</p>
         <h3>Language</h3>
@@ -2527,6 +2544,7 @@ SV.views.renderTasksSection = function(kind, containerId, item, editable){
         <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreTask('${kind}','${containerId}','${item.id}','${t.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details>` : "";
   const addForm = editable ? `
+    <details class="new-entry-toggle"><summary class="btn secondary">+ ${SV.t("new_task_heading")}</summary>
     <div class="new-entry">
       <div class="new-entry-title">${SV.t("new_task_heading")}</div>
       ${SV.editor.ta("newtask-text-"+item.id, "")}
@@ -2535,7 +2553,8 @@ SV.views.renderTasksSection = function(kind, containerId, item, editable){
         <div><label>${SV.t("label_due")}</label><input type="date" id="newtask-ter-${item.id}"></div>
         <div style="flex:0;"><button onclick="SV.actions.addTask('${kind}','${containerId}','${item.id}','newtask-text-${item.id}','newtask-ver-${item.id}','newtask-ter-${item.id}')">${SV.t("btn_save_new_task")}</button></div>
       </div>
-    </div>` : "";
+    </div>
+    </details>` : "";
   // Version 1.11.0: sobald Aufgaben vorhanden sind, bleibt der Abschnitt
   // aufgeklappt (wie Anhaenge/Antraege).
   return `<details ${n?"open":""}><summary>${SV.t("tasks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
@@ -2614,6 +2633,7 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable, aut
         <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreAntrag('${kind}','${containerId}','${item.id}','${a.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details>` : "";
   const addForm = editable ? `
+    <details class="new-entry-toggle"><summary class="btn secondary">+ ${SV.t("new_antrag_heading")}</summary>
     <div class="new-entry">
       <div class="new-entry-title">${SV.t("new_antrag_heading")}</div>
       <label>${SV.t("label_antrag")}</label>${SV.editor.ta("newa-atxt-"+item.id, "")}
@@ -2625,7 +2645,8 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable, aut
         <div><label>${SV.t("label_enthaltung")}</label><input type="number" min="0" id="newa-enth-${item.id}" value="0"></div>
       </div>
       <button style="margin-top:6px;" onclick="SV.actions.addAntrag('${kind}','${containerId}','${item.id}',{antrag_text:SV.util.byId('newa-atxt-${item.id}').value,beschluss_text:SV.util.byId('newa-abtxt-${item.id}').value,ergebnis:SV.util.byId('newa-erg-${item.id}').value,dafuer:+SV.util.byId('newa-daf-${item.id}').value,dagegen:+SV.util.byId('newa-dag-${item.id}').value,enthaltung:+SV.util.byId('newa-enth-${item.id}').value})">${SV.t("btn_save_new_antrag")}</button>
-    </div>` : "";
+    </div>
+    </details>` : "";
   return `<details ${autoOpen?"open":""}><summary>${SV.t("antraege_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
 
@@ -3295,6 +3316,13 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
       <div class="split-right">${rightHtml}</div>
     </div>` : `<p class="muted">${SV.t("no_items_yet")}</p>${addItemFormHtml}`}
     ${trashItems}
+    <div class="card" style="margin-top:10px;">
+      <div class="small muted" style="margin-bottom:6px;">${SV.t("preview_hint")}</div>
+      <div class="btn-row">
+        <button class="secondary" onclick="SV.actions.previewProtocol('${meeting.id}', false)">📄 ${SV.t("btn_preview_public")}</button>
+        <button class="secondary" onclick="SV.actions.previewProtocol('${meeting.id}', true)">📄 ${SV.t("btn_preview_full")}</button>
+      </div>
+    </div>
     <div class="btn-row" style="margin-top:10px;">
       <button onclick="SV.actions.completeMeeting('${meeting.id}')">${SV.t("btn_complete_meeting")}</button>
       <button class="danger" onclick="SV.actions.deleteMeeting('${meeting.id}')">${SV.t("btn_delete_meeting")}</button>
@@ -3371,6 +3399,14 @@ SV.actions.toggleItemTimer = async function(meetingId, itemId){
     }
   });
   SV.router.go();
+};
+// Version 1.12.0: Protokoll-PDF schon vor dem Abschliessen (zur Abstimmung).
+// Gleiche Erzeugung wie im abgeschlossenen Protokoll, nur als "Entwurf"
+// gekennzeichnet; weist auf noch nicht gespeicherte Eingaben hin, da diese
+// nicht im PDF landen.
+SV.actions.previewProtocol = async function(meetingId, full){
+  if(SV.drafts.count()) SV.ui.toast(SV.t("toast_preview_unsaved"));
+  await SV.pdf.protocolPdf(meetingId, full);
 };
 SV.actions.completeMeeting = async function(meetingId){
   if(!await SV.ui.confirm(SV.t("confirm_complete_meeting"))) return;
@@ -3983,7 +4019,8 @@ SV.pdf = {
     const doc = SV.pdf.newDoc("P");
     const state = SV.pdf.newState(doc);
     SV.pdf.header(state, SV.t("pdf_protocol_title", meeting.title||SV.t("no_title")),
-      (meeting.date?SV.t("pdf_date_label", SV.util.dmy(meeting.date)):"") + (full?SV.t("pdf_full_version"):SV.t("pdf_public_version")));
+      (meeting.date?SV.t("pdf_date_label", SV.util.dmy(meeting.date)):"") + (full?SV.t("pdf_full_version"):SV.t("pdf_public_version"))
+      + (meeting.status!=="abgeschlossen" ? SV.t("pdf_draft_suffix") : ""));
     // Version 1.11.0: Teilnehmer (in beiden Fassungen), Bemerkungen aus
     // migrierten Altdaten nur in der vollstaendigen Fassung.
     if(meeting.teilnehmer){
@@ -4027,7 +4064,7 @@ SV.pdf = {
       });
     });
     const bytes = await SV.pdf.appendAttachments(doc, teamId, attachmentRefs);
-    SV.pdf.downloadPdfBytes(bytes, SV.t("pdf_filename_protocol", meeting.date||SV.t("pdf_filename_no_date"), full?"":SV.t("pdf_filename_public_suffix")));
+    SV.pdf.downloadPdfBytes(bytes, SV.t("pdf_filename_protocol", meeting.date||SV.t("pdf_filename_no_date"), (full?"":SV.t("pdf_filename_public_suffix")) + (meeting.status!=="abgeschlossen" ? SV.t("pdf_filename_draft_suffix") : "")));
   },
 
   beschlusslistePdf(entries, format){
