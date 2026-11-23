@@ -170,6 +170,24 @@ hr{border:none; border-top:1px solid var(--border); margin:14px 0;}
 .block-bullets{list-style:disc; margin:4px 0 4px 20px; padding:0;}
 .block-bullets li{margin-bottom:4px;}
 .block-sublist{list-style:none; margin:2px 0; padding:0; text-indent:-14px; padding-left:14px;}
+/* Version 1.11.0: Listen mit eigenem Marker (Punkt, Strich oder Nummer) */
+.block-list{list-style:none; margin:3px 0 3px 0; padding:0;}
+.block-list li{display:flex; gap:6px; margin-bottom:3px; white-space:pre-wrap;}
+.block-list .bl-marker{flex:none; min-width:14px; color:var(--muted);}
+/* Version 1.11.0: Formatierungsleiste ueber Textfeldern */
+.fmt-wrap{margin-bottom:2px;}
+.fmt-bar{display:flex; gap:3px; flex-wrap:wrap; margin-bottom:3px;}
+.fmt-bar .fmt-btn{background:#eef1f4; color:var(--text); border:1px solid var(--border); padding:1px 7px;
+  font-size:.78rem; min-width:26px; line-height:1.5;}
+.fmt-bar .fmt-btn:hover{background:#e3e8ed;}
+textarea.fmt{min-height:4.6em;}
+/* Version 1.11.0: noch nicht gespeicherte Eingaben sichtbar machen */
+.unsaved{border-color:#e0a23c !important; background:#fffaf0 !important;}
+.unsaved-hint{display:none; font-size:.75rem; color:#a0650b; margin-top:2px;}
+textarea.unsaved + .unsaved-hint{display:block;}
+/* Version 1.11.0: Formular fuer neue Eintraege klar als eigener Kasten */
+.new-entry{border:1px dashed #b9c6d6; border-radius:8px; padding:10px 12px; margin-top:10px; background:#f8fbff;}
+.new-entry-title{font-size:.82rem; font-weight:600; color:var(--blue-dark); margin-bottom:6px;}
 .toolbar{display:flex; gap:6px; flex-wrap:wrap; margin:6px 0;}
 .center{text-align:center;}
 #helpdlg{max-width:640px; width:92vw;}
@@ -215,7 +233,7 @@ table.plain th, table.plain td{border:1px solid var(--border); padding:4px 6px; 
 <script>
 "use strict";
 const SV = {};
-SV.VERSION = "1.10.1";
+SV.VERSION = "1.11.0";
 if(window.pdfjsLib){ window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js"; }
 
 /* ===================== Sprache / Übersetzung (i18n) =====================
@@ -296,7 +314,7 @@ SV.i18n = {
       btn_save: "Speichern",
       deleted_blocks_summary: "Gelöschte Textblöcke ({0}) – wiederherstellen",
       btn_restore: "Wiederherstellen",
-      placeholder_block_text: "Text, optional mit '-' für Aufzählungen...",
+      placeholder_block_text: "Text …",
       btn_add_block_more: "+ weiteren Textblock hinzufügen",
       btn_add_block: "Textblock hinzufügen",
       tasks_summary: "✅ Aufgaben ({0})",
@@ -436,6 +454,22 @@ SV.i18n = {
       reopen_summary: "🔓 Protokoll wieder öffnen (z.B. um einen Tippfehler nachträglich zu korrigieren)",
       reopen_hint: 'Setzt die Sitzung zurück auf "laufend" – danach lässt sich alles wie gewohnt bearbeiten.',
       btn_reopen: "Wieder öffnen",
+      label_teilnehmer: "Teilnehmer",
+      placeholder_teilnehmer: "z. B. Anna, Ben, Carla – oder ein Name pro Zeile",
+      label_intro_note: "Bemerkungen",
+      pdf_teilnehmer_label: "Teilnehmer:",
+      toast_saved: "Gespeichert.",
+      new_block_heading: "Neues Textfeld",
+      new_task_heading: "Neue Aufgabe",
+      new_antrag_heading: "Neuer Antrag/Beschluss",
+      btn_save_new_block: "Textfeld speichern",
+      btn_save_new_task: "Aufgabe speichern",
+      btn_save_new_antrag: "Antrag/Beschluss speichern",
+      hint_unsaved: "Noch nicht gespeichert",
+      fmt_b_label: "F", fmt_i_label: "K", fmt_ul_label: "Liste", fmt_ol_label: "Liste",
+      fmt_bold: "Fett (⌘B / Strg+B)", fmt_italic: "Kursiv (⌘I / Strg+I)",
+      fmt_ul: "Aufzählung mit Punkten", fmt_ol: "Nummerierte Liste",
+      fmt_indent: "Einrücken (Tab)", fmt_outdent: "Ausrücken (Umschalt+Tab)",
       closed_banner_text: "Diese Sitzung ist abgeschlossen und deshalb nur zum Ansehen. Zum Ändern zuerst wieder öffnen.",
       btn_reopen_top: "🔓 Zum Bearbeiten wieder öffnen",
       completed_on: " am {0}",
@@ -545,6 +579,10 @@ SV.i18n = {
         <h3>Agenden &amp; Sitzungen</h3>
         <p>Eine Agenda ist eine Vorlage mit Tagesordnungspunkten (Titel immer Pflicht, Datum optional – zum Termine-Planen). Mit "Sitzung starten" wird daraus eine laufende Sitzung – die Agenda selbst bleibt dabei unverändert als Vorlage bestehen und erscheint danach im Bereich "Alte Agenden".</p>
         <p>Tagesordnungspunkte lassen sich mit ← / → eine Ebene höher/tiefer stufen, in laufenden Sitzungen zusätzlich mit ↑ / ↓ verschieben. Innerhalb eines Punkts: Textblöcke (mit "-" oder "1., 2., ..." für Aufzählungen, auch verschachtelt), Anträge/Beschlüsse mit Abstimmungsergebnis, und Aufgaben mit Verantwortlichem und Termin.</p>
+        <h3>Textfelder formatieren</h3>
+        <p>Über jedem größeren Textfeld steht eine kleine Leiste: <b>F</b> (fett), <i>K</i> (kursiv), • Liste, 1. Liste sowie ⇤/⇥ zum Aus-/Einrücken (tiefere Listenebene). Im Textfeld selbst erscheinen die Markierungen als <code>**fett**</code> und <code>*kursiv*</code>, Listen als „- “ bzw. „1. “ – im abgeschlossenen Protokoll und im PDF wird alles formatiert dargestellt. In einer Liste setzt Enter automatisch den nächsten Punkt, Enter auf einem leeren Punkt beendet die Liste, Tab/Umschalt+Tab ändern die Ebene.</p>
+        <h3>Nicht gespeicherte Eingaben</h3>
+        <p>Was du in ein Feld tippst, bleibt erhalten, auch wenn du zwischendurch etwas anderes speicherst oder einen anderen TOP öffnest. Solche Felder sind orange markiert („Noch nicht gespeichert“), bis du sie speicherst. Erst beim Schließen oder Neuladen der App gehen sie verloren – vorher fragt der Browser nach.</p>
         <h3>Abschließen &amp; wieder öffnen</h3>
         <p>"Sitzung abschließen" sperrt das Protokoll gegen versehentliches Bearbeiten. Für nachträgliche Korrekturen lässt es sich über "Protokoll wieder öffnen" erneut bearbeitbar machen.</p>
         <h3>Beschlussliste &amp; Aufgaben</h3>
@@ -600,7 +638,7 @@ SV.i18n = {
       btn_save: "Save",
       deleted_blocks_summary: "Deleted text blocks ({0}) – restore",
       btn_restore: "Restore",
-      placeholder_block_text: "Text, optionally with '-' for bullet lists...",
+      placeholder_block_text: "Text …",
       btn_add_block_more: "+ add another text block",
       btn_add_block: "Add text block",
       tasks_summary: "✅ Tasks ({0})",
@@ -740,6 +778,22 @@ SV.i18n = {
       reopen_summary: "🔓 Reopen minutes (e.g. to fix a typo afterwards)",
       reopen_hint: 'Resets the meeting to "running" – everything can then be edited as usual.',
       btn_reopen: "Reopen",
+      label_teilnehmer: "Participants",
+      placeholder_teilnehmer: "e.g. Anna, Ben, Carla – or one name per line",
+      label_intro_note: "Notes",
+      pdf_teilnehmer_label: "Participants:",
+      toast_saved: "Saved.",
+      new_block_heading: "New text field",
+      new_task_heading: "New task",
+      new_antrag_heading: "New motion/resolution",
+      btn_save_new_block: "Save text field",
+      btn_save_new_task: "Save task",
+      btn_save_new_antrag: "Save motion/resolution",
+      hint_unsaved: "Not saved yet",
+      fmt_b_label: "B", fmt_i_label: "I", fmt_ul_label: "List", fmt_ol_label: "List",
+      fmt_bold: "Bold (⌘B / Ctrl+B)", fmt_italic: "Italic (⌘I / Ctrl+I)",
+      fmt_ul: "Bulleted list", fmt_ol: "Numbered list",
+      fmt_indent: "Indent (Tab)", fmt_outdent: "Outdent (Shift+Tab)",
       closed_banner_text: "This meeting is completed and therefore read-only. Reopen it first to make changes.",
       btn_reopen_top: "🔓 Reopen for editing",
       completed_on: " on {0}",
@@ -849,6 +903,10 @@ SV.i18n = {
         <h3>Agendas &amp; Meetings</h3>
         <p>An agenda is a template with agenda items (title always required, date optional – for scheduling). "Start meeting" turns it into a running meeting – the agenda itself stays unchanged as a template and afterwards appears under "Old agendas".</p>
         <p>Agenda items can be promoted/demoted one level with ← / →, and in running meetings also reordered with ↑ / ↓. Within an item: text blocks (with "-" or "1., 2., ..." for lists, nesting allowed), motions/resolutions with a voting outcome, and tasks with a person responsible and a due date.</p>
+        <h3>Formatting text fields</h3>
+        <p>Above each larger text field there is a small bar: <b>B</b> (bold), <i>I</i> (italic), • List, 1. List and ⇤/⇥ to outdent/indent (deeper list level). In the field itself the marks appear as <code>**bold**</code> and <code>*italic*</code>, lists as "- " or "1. " – the completed minutes and the PDF show everything formatted. Inside a list, Enter starts the next item, Enter on an empty item ends the list, Tab/Shift+Tab change the level.</p>
+        <h3>Unsaved input</h3>
+        <p>Whatever you type into a field is kept, even if you save something else in between or open another agenda item. Such fields are marked orange ("Not saved yet") until you save them. They are only lost when closing or reloading the app – the browser asks first.</p>
         <h3>Completing &amp; reopening</h3>
         <p>"Complete meeting" locks the minutes against accidental editing. For later corrections, "Reopen minutes" makes it editable again.</p>
         <h3>Resolutions &amp; Tasks</h3>
@@ -902,14 +960,14 @@ SV.util = {
   debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; },
   autoGrow(ta){
     if(!ta) return;
+    // Unsichtbare Felder (z.B. in zugeklappten Abschnitten) haben keine
+    // messbare Hoehe - die werden beim Aufklappen nachgemessen.
+    if(ta.offsetParent === null) return;
     ta.style.height = "auto";
     ta.style.height = (ta.scrollHeight + 2) + "px";
   },
   installAutoGrow(root){
-    SV.util.qsa("textarea", root||document).forEach(ta=>{
-      SV.util.autoGrow(ta);
-      ta.oninput = ()=>SV.util.autoGrow(ta);
-    });
+    SV.util.qsa("textarea", root||document).forEach(ta=> SV.util.autoGrow(ta));
   },
   downloadBlob(blob, filename){
     const url = URL.createObjectURL(blob);
@@ -1348,8 +1406,9 @@ SV.textformat = {
         const finalDepth = depth + colonOffset;
         if(curListSeg && lastListDepth === finalDepth){
           curListSeg.items.push(itemText);
+          curListSeg.nums.push(m[3] !== undefined ? m[3] : null);
         } else {
-          curListSeg = {type:"list", depth: finalDepth, items:[itemText]};
+          curListSeg = {type:"list", depth: finalDepth, items:[itemText], nums:[m[3] !== undefined ? m[3] : null]};
           segments.push(curListSeg);
         }
         lastListDepth = finalDepth;
@@ -1365,6 +1424,37 @@ SV.textformat = {
     return segments;
   },
 
+  // Seit Version 1.11.0: einfache Inline-Formatierung im Text - **fett** und
+  // *kursiv* (wie Markdown). Gespeichert wird weiterhin reiner Text mit diesen
+  // Markierungen; App-Ansicht und PDF stellen sie formatiert dar.
+  INLINE_RE: /(\*\*[^*\n]+?\*\*|\*[^*\s\n](?:[^*\n]*?[^*\s\n])?\*)/g,
+  // Zerlegt eine Zeile in Abschnitte {text, bold, italic}.
+  inlineRuns(str){
+    const out = [];
+    let last = 0;
+    const re = new RegExp(SV.textformat.INLINE_RE.source, "g");
+    let m;
+    while((m = re.exec(str))){
+      if(m.index > last) out.push({text: str.slice(last, m.index), bold:false, italic:false});
+      const tok = m[0];
+      if(tok.startsWith("**")) out.push({text: tok.slice(2,-2), bold:true, italic:false});
+      else out.push({text: tok.slice(1,-1), bold:false, italic:true});
+      last = m.index + tok.length;
+    }
+    if(last < str.length) out.push({text: str.slice(last), bold:false, italic:false});
+    return out;
+  },
+  inlineHtml(str){
+    return SV.textformat.inlineRuns(str||"").map(r=>{
+      const t = SV.util.esc(r.text);
+      return r.bold ? `<strong>${t}</strong>` : (r.italic ? `<em>${t}</em>` : t);
+    }).join("");
+  },
+  // Text ohne Formatierungs-Markierungen (fuer Tabellen-PDFs, Vorschauen).
+  plain(str){
+    return SV.textformat.inlineRuns(str||"").map(r=>r.text).join("");
+  },
+
   // HTML-Rendering fuer die Protokoll-Ansicht (entspricht meeting_view.html / _macros.html::segments)
   renderSegmentsHtml(content){
     const segs = SV.textformat.parseBlockSegments(content);
@@ -1373,22 +1463,227 @@ SV.textformat = {
       if(seg.type === "text"){
         const t = seg.text.replace(/^\n+|\n+$/g, "");
         if(t.trim()==="") continue;
-        html += `<p style="margin:4px 0; white-space:pre-wrap;">${SV.util.esc(t)}</p>`;
+        html += `<p style="margin:4px 0; white-space:pre-wrap;">${SV.textformat.inlineHtml(t)}</p>`;
       } else {
-        if(seg.depth === 0){
-          html += `<ul class="block-bullets">`;
-          for(const it of seg.items) html += `<li>${SV.util.esc(it)}</li>`;
-          html += `</ul>`;
-        } else {
-          const margin = 40 + (seg.depth-1)*20;
-          html += `<ul class="block-sublist" style="margin-left:${margin}px;">`;
-          for(const it of seg.items) html += `<li>– ${SV.util.esc(it)}</li>`;
-          html += `</ul>`;
-        }
+        // Seit Version 1.11.0: nummerierte Punkte ("1. ...") behalten ihre
+        // Nummer, "- ..." wird zum Punkt (Ebene 0) bzw. Strich (tiefere Ebenen).
+        const margin = seg.depth === 0 ? 0 : 20 + (seg.depth-1)*20;
+        html += `<ul class="block-list" style="margin-left:${margin}px;">`;
+        seg.items.forEach((it,i)=>{
+          const num = seg.nums && seg.nums[i];
+          const marker = num ? num+"." : (seg.depth===0 ? "•" : "–");
+          html += `<li><span class="bl-marker">${marker}</span><span>${SV.textformat.inlineHtml(it)}</span></li>`;
+        });
+        html += `</ul>`;
       }
     }
     return html || "";
   },
+};
+
+/* ===================== Textfeld-Formatierung (Version 1.11.0) =====================
+   Schlanke Formatierungsleiste ueber den wichtigen Textfeldern (Meeting-
+   Protokoll, Vorbereitung, Antrag/Beschluss, Aufgaben): fett, kursiv,
+   Aufzaehlung, nummerierte Liste, ein-/ausruecken. Gespeichert wird weiterhin
+   reiner Text (**fett**, *kursiv*, "- " bzw. "1. " am Zeilenanfang,
+   Einrueckung = tiefere Ebene) - dadurch bleiben Export/Import, alte Daten und
+   die bestehende Aufzaehlungs-Erkennung unveraendert kompatibel.
+   Tastatur: Enter setzt eine Liste automatisch fort (leerer Punkt + Enter
+   beendet sie), Tab/Umschalt+Tab ruecken Listenpunkte ein/aus,
+   Cmd/Strg+B und Cmd/Strg+I fuer fett/kursiv. */
+SV.editor = {
+  LIST_LINE_RE: /^(\s*)(?:(-)\s+|(\d+)[.)]\s+)?(.*)$/,
+  toolbar(taId){
+    const b = (cmd, label, tip)=>`<button type="button" class="fmt-btn" tabindex="-1" data-for="${taId}" data-cmd="${cmd}" title="${tip}">${label}</button>`;
+    return `<div class="fmt-bar">
+      ${b("bold", `<b>${SV.t("fmt_b_label")}</b>`, SV.t("fmt_bold"))}
+      ${b("italic", `<i>${SV.t("fmt_i_label")}</i>`, SV.t("fmt_italic"))}
+      ${b("ul", "• "+SV.t("fmt_ul_label"), SV.t("fmt_ul"))}
+      ${b("ol", "1. "+SV.t("fmt_ol_label"), SV.t("fmt_ol"))}
+      ${b("outdent", "⇤", SV.t("fmt_outdent"))}
+      ${b("indent", "⇥", SV.t("fmt_indent"))}
+    </div>`;
+  },
+  // Textarea mit Formatierungsleiste.
+  ta(id, value, placeholder){
+    return `<div class="fmt-wrap">${SV.editor.toolbar(id)}<textarea id="${id}" class="fmt" ${placeholder?`placeholder="${SV.util.esc(placeholder)}"`:""}>${SV.util.esc(value||"")}</textarea><div class="unsaved-hint">${SV.t("hint_unsaved")}</div></div>`;
+  },
+  _lineRange(val, start, end){
+    const ls = val.lastIndexOf("\n", start-1) + 1;
+    let le = val.indexOf("\n", Math.max(end, start) - (end>start && val[end-1]==="\n" ? 1 : 0));
+    if(le < 0) le = val.length;
+    return [ls, le];
+  },
+  _apply(ta, newVal, selStart, selEnd){
+    ta.value = newVal;
+    ta.focus();
+    try{ ta.setSelectionRange(selStart, selEnd); }catch(e){}
+    ta.dispatchEvent(new Event("input", {bubbles:true}));
+  },
+  wrapInline(ta, marker){
+    const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd, n = marker.length;
+    const sel = v.slice(s, e);
+    // bereits umschlossen -> Markierung entfernen
+    if(s>=n && v.slice(s-n, s)===marker && v.slice(e, e+n)===marker){
+      return SV.editor._apply(ta, v.slice(0,s-n)+sel+v.slice(e+n), s-n, e-n);
+    }
+    if(sel.startsWith(marker) && sel.endsWith(marker) && sel.length>=2*n){
+      const inner = sel.slice(n, sel.length-n);
+      return SV.editor._apply(ta, v.slice(0,s)+inner+v.slice(e), s, s+inner.length);
+    }
+    // Leerzeichen am Rand der Auswahl nicht mit einschliessen
+    const lead = sel.match(/^\s*/)[0].length, trail = sel.match(/\s*$/)[0].length;
+    const core = sel.slice(lead, sel.length-trail);
+    if(!core){
+      return SV.editor._apply(ta, v.slice(0,s)+marker+marker+v.slice(e), s+n, s+n);
+    }
+    const ins = sel.slice(0,lead)+marker+core+marker+sel.slice(sel.length-trail);
+    return SV.editor._apply(ta, v.slice(0,s)+ins+v.slice(e), s+lead+n, s+lead+n+core.length);
+  },
+  mapLines(ta, fn){
+    const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+    const [ls, le] = SV.editor._lineRange(v, s, e);
+    const lines = v.slice(ls, le).split("\n");
+    const out = fn(lines, v.slice(0, ls));
+    const joined = out.join("\n");
+    const single = lines.length === 1;
+    // Cursor bei einzelner Zeile ans Zeilenende relativ mitnehmen
+    if(single){
+      const delta = joined.length - lines[0].length;
+      const pos = Math.max(ls, Math.min(ls+joined.length, e+delta));
+      return SV.editor._apply(ta, v.slice(0,ls)+joined+v.slice(le), pos, pos);
+    }
+    SV.editor._apply(ta, v.slice(0,ls)+joined+v.slice(le), ls, ls+joined.length);
+  },
+  parseLine(line){
+    const m = line.match(SV.editor.LIST_LINE_RE);
+    return { ws: m[1]||"", bullet: !!m[2], num: m[3] ? parseInt(m[3],10) : null, text: m[4]||"" };
+  },
+  toggleList(ta, type){
+    SV.editor.mapLines(ta, (lines, before)=>{
+      const nonEmpty = lines.filter(l=>l.trim()!=="");
+      const parsed = lines.map(SV.editor.parseLine);
+      const allSame = nonEmpty.length && parsed.every((p,i)=> lines[i].trim()==="" || (type==="ul" ? p.bullet : p.num!==null));
+      // Startnummer: an eine direkt darueberliegende nummerierte Zeile anschliessen
+      let n = 1;
+      if(type==="ol"){
+        const prevLine = before.replace(/\n$/,"").split("\n").pop() || "";
+        const pp = SV.editor.parseLine(prevLine);
+        if(pp.num!==null && before.length) n = pp.num + 1;
+      }
+      return parsed.map((p,i)=>{
+        if(lines[i].trim()==="") return lines[i];
+        if(allSame) return p.ws + p.text;
+        return p.ws + (type==="ul" ? "- " : (n++)+". ") + p.text;
+      });
+    });
+  },
+  indent(ta, dir){
+    SV.editor.mapLines(ta, (lines)=> lines.map(l=>{
+      if(dir>0) return l.trim()==="" ? l : "  "+l;
+      if(l.startsWith("\t")) return l.slice(1);
+      return l.replace(/^ {1,2}/, "");
+    }));
+  },
+  exec(taId, cmd){
+    const ta = SV.util.byId(taId); if(!ta) return;
+    if(cmd==="bold") return SV.editor.wrapInline(ta, "**");
+    if(cmd==="italic") return SV.editor.wrapInline(ta, "*");
+    if(cmd==="ul" || cmd==="ol") return SV.editor.toggleList(ta, cmd);
+    if(cmd==="indent") return SV.editor.indent(ta, 1);
+    if(cmd==="outdent") return SV.editor.indent(ta, -1);
+  },
+  onKeyDown(ev){
+    const ta = ev.target;
+    if(!(ta && ta.tagName==="TEXTAREA" && ta.classList.contains("fmt"))) return;
+    const mod = ev.metaKey || ev.ctrlKey;
+    if(mod && !ev.altKey && (ev.key==="b" || ev.key==="B")){ ev.preventDefault(); return SV.editor.wrapInline(ta, "**"); }
+    if(mod && !ev.altKey && (ev.key==="i" || ev.key==="I")){ ev.preventDefault(); return SV.editor.wrapInline(ta, "*"); }
+    const v = ta.value, s = ta.selectionStart, e = ta.selectionEnd;
+    const ls = v.lastIndexOf("\n", s-1) + 1;
+    let le = v.indexOf("\n", s); if(le<0) le = v.length;
+    const cur = SV.editor.parseLine(v.slice(ls, le));
+    const isList = cur.bullet || cur.num!==null;
+    if(ev.key==="Tab" && !mod && !ev.altKey){
+      // Tab nur in Listen abfangen (sonst bleibt Tab = naechstes Feld)
+      const [rs, re] = SV.editor._lineRange(v, s, e);
+      const anyList = v.slice(rs, re).split("\n").some(l=>{ const p=SV.editor.parseLine(l); return p.bullet || p.num!==null; });
+      if(!anyList) return;
+      ev.preventDefault();
+      return SV.editor.indent(ta, ev.shiftKey ? -1 : 1);
+    }
+    if(ev.key==="Enter" && !ev.shiftKey && !mod && !ev.altKey && !ev.isComposing && s===e && isList){
+      ev.preventDefault();
+      if(cur.text.trim()===""){
+        // leerer Punkt: Liste beenden (Marker entfernen)
+        return SV.editor._apply(ta, v.slice(0,ls)+v.slice(le), ls, ls);
+      }
+      const marker = cur.bullet ? "- " : (cur.num+1)+". ";
+      const ins = "\n" + cur.ws + marker;
+      return SV.editor._apply(ta, v.slice(0,s)+ins+v.slice(e), s+ins.length, s+ins.length);
+    }
+  },
+};
+
+/* ===================== Ungespeicherte Eingaben (Version 1.11.0) =====================
+   Jede Eingabe in einem Feld der Agenda-/Sitzungsbearbeitung wird sofort im
+   Arbeitsspeicher als Entwurf gemerkt (je Feld-Id). Zeichnet die App die Seite
+   neu (z.B. nach "Speichern" eines ANDEREN Felds, Timer, Abhaken, TOP-Wechsel),
+   werden diese Entwuerfe wieder in die Felder eingesetzt und orange markiert -
+   nichts geht mehr verloren, nur weil irgendwo anders gespeichert wurde.
+   Entwuerfe verschwinden erst, wenn das Feld selbst gespeichert wurde, oder
+   beim Schliessen/Neuladen der App (dann fragt der Browser vorher nach). */
+SV.drafts = {
+  map: {},
+  active(){ return /^#\/(agendas|meetings)\/[^/]+/.test(location.hash||""); },
+  trackable(el){
+    if(!el || !el.id || !el.closest || !el.closest("#app")) return false;
+    if(el.tagName==="TEXTAREA" || el.tagName==="SELECT") return true;
+    return el.tagName==="INPUT" && ["text","number","date"].includes(el.type);
+  },
+  track(el){
+    if(!SV.drafts.active() || !SV.drafts.trackable(el)) return;
+    SV.drafts.map[el.id] = el.value;
+    el.classList.add("unsaved");
+  },
+  clear(...ids){ ids.forEach(id=>{ delete SV.drafts.map[id]; }); },
+  count(){ return Object.keys(SV.drafts.map).length; },
+  restore(){
+    for(const id of Object.keys(SV.drafts.map)){
+      const el = SV.util.byId(id);
+      if(!el) continue;
+      if(el.value === SV.drafts.map[id]){ delete SV.drafts.map[id]; el.classList.remove("unsaved"); continue; }
+      el.value = SV.drafts.map[id];
+      el.classList.add("unsaved");
+      // Abschnitt mit ungespeichertem Inhalt automatisch aufklappen
+      let d = el.closest("details");
+      while(d){ d.open = true; d = d.parentElement ? d.parentElement.closest("details") : null; }
+    }
+  },
+};
+
+SV.editor.installGlobal = function(){
+  document.addEventListener("input", (ev)=>{
+    SV.drafts.track(ev.target);
+    if(ev.target && ev.target.tagName==="TEXTAREA") SV.util.autoGrow(ev.target);
+  });
+  document.addEventListener("change", (ev)=>{
+    if(ev.target && ev.target.tagName==="SELECT") SV.drafts.track(ev.target);
+  });
+  document.addEventListener("keydown", SV.editor.onKeyDown);
+  // Formatierungsknoepfe: Fokus/Auswahl im Textfeld nicht verlieren
+  document.addEventListener("mousedown", (ev)=>{ if(ev.target.closest && ev.target.closest(".fmt-btn")) ev.preventDefault(); });
+  document.addEventListener("click", (ev)=>{
+    const btn = ev.target.closest && ev.target.closest(".fmt-btn");
+    if(!btn) return;
+    ev.preventDefault();
+    SV.editor.exec(btn.dataset.for, btn.dataset.cmd);
+  });
+  // Beim Aufklappen eines Abschnitts die Textfelder darin nachmessen
+  document.addEventListener("toggle", (ev)=>{ if(ev.target && ev.target.open) SV.util.installAutoGrow(ev.target); }, true);
+  window.addEventListener("beforeunload", (ev)=>{
+    if(SV.drafts.count()){ ev.preventDefault(); ev.returnValue = ""; return ""; }
+  });
 };
 
 /* ===================== Datenmodell (Port von core/models.py) ===================== */
@@ -1463,7 +1758,7 @@ SV.model = {
   newMeeting(date, title, agenda_id){
     return {
       id: SV.util.uuid(), date: date||"", title: title||"", agenda_id: agenda_id||null,
-      status:"laufend", items: [], geloeschte_items: [], intro_note:"",
+      status:"laufend", items: [], geloeschte_items: [], intro_note:"", teilnehmer:"",
       showTimerInProtocol: false,
       created_at: SV.util.nowIso(), completed_at: null,
     };
@@ -1628,6 +1923,7 @@ SV.actions.addItem = async function(kind, containerId, titleElId, publicElId){
     const order = topOrders.length ? Math.max(...topOrders)+1 : 0;
     c.items.push(SV.model.newItemFor(kind, title, {order, public:isPublic}));
   });
+  SV.drafts.clear(titleElId);
   SV.actions._refresh();
 };
 SV.actions.editItemTitle = async function(kind, containerId, itemId, inputId){
@@ -1636,6 +1932,7 @@ SV.actions.editItemTitle = async function(kind, containerId, itemId, inputId){
   await SV.actions._mutate(kind, containerId, (c)=>{
     const it = c.items.find(x=>x.id===itemId); if(it) it.title = title;
   });
+  SV.drafts.clear(inputId);
   SV.actions._refresh();
 };
 SV.actions.indentItem = async function(kind, containerId, itemId, direction){
@@ -1760,6 +2057,7 @@ SV.actions.addBlock = async function(kind, containerId, itemId, textareaId){
     const it = c.items.find(x=>x.id===itemId);
     it.blocks.push(SV.model.newBlock(content));
   });
+  SV.drafts.clear(textareaId);
   SV.actions._refresh();
 };
 SV.actions.editBlock = async function(kind, containerId, itemId, blockId, textareaId){
@@ -1769,6 +2067,7 @@ SV.actions.editBlock = async function(kind, containerId, itemId, blockId, textar
     const b = it.blocks.find(x=>x.id===blockId);
     if(b) b.content = SV.textformat.cleanBlockContent(content);
   });
+  SV.drafts.clear(textareaId);
   SV.actions._refresh();
 };
 SV.actions.deleteBlock = async function(kind, containerId, itemId, blockId){
@@ -1777,6 +2076,7 @@ SV.actions.deleteBlock = async function(kind, containerId, itemId, blockId){
     const b = it.blocks.find(x=>x.id===blockId);
     if(b){ b.deleted_at = SV.util.nowIso(); it.geloeschte_blocks.push(b); it.blocks = it.blocks.filter(x=>x.id!==blockId); }
   });
+  SV.drafts.clear("blk-"+blockId);
   SV.actions._refresh();
 };
 SV.actions.restoreBlock = async function(kind, containerId, itemId, blockId){
@@ -1798,6 +2098,7 @@ SV.actions.addTask = async function(kind, containerId, itemId, textId, verId, te
     const it = c.items.find(x=>x.id===itemId);
     it.aufgaben.push(SV.model.newTask(text, ver, ter));
   });
+  SV.drafts.clear(textId, verId, terId);
   SV.actions._refresh();
 };
 SV.actions.deleteTask = async function(kind, containerId, itemId, taskId){
@@ -1806,6 +2107,7 @@ SV.actions.deleteTask = async function(kind, containerId, itemId, taskId){
     const t = it.aufgaben.find(x=>x.id===taskId);
     if(t){ t.deleted_at = SV.util.nowIso(); it.geloeschte_aufgaben.push(t); it.aufgaben = it.aufgaben.filter(x=>x.id!==taskId); }
   });
+  SV.drafts.clear("txt-"+taskId, "ver-"+taskId, "ter-"+taskId, "st-"+taskId);
   SV.actions._refresh();
 };
 SV.actions.restoreTask = async function(kind, containerId, itemId, taskId){
@@ -1831,6 +2133,7 @@ SV.actions.addTaskComment = async function(kind, containerId, itemId, taskId, te
     const t = it.aufgaben.find(x=>x.id===taskId);
     if(t){ t.kommentare = t.kommentare||[]; t.kommentare.push(SV.model.newComment(text)); }
   });
+  SV.drafts.clear(textId);
   SV.actions._refresh();
 };
 
@@ -1840,6 +2143,7 @@ SV.actions.addAntrag = async function(kind, containerId, itemId, data){
     const it = c.items.find(x=>x.id===itemId);
     it.antraege.push(SV.model.newAntrag(Object.assign({}, data, {prepared: kind==="agenda"})));
   });
+  SV.drafts.clear(...["atxt","abtxt","erg","daf","dag","enth"].map(k=>"newa-"+k+"-"+itemId));
   SV.actions._refresh();
 };
 SV.actions.editAntrag = async function(kind, containerId, itemId, antragId, data){
@@ -1852,6 +2156,7 @@ SV.actions.editAntrag = async function(kind, containerId, itemId, antragId, data
       ergebnis: data.ergebnis, dafuer: data.dafuer, dagegen: data.dagegen, enthaltung: data.enthaltung,
     });
   });
+  SV.drafts.clear(...["atxt-","abtxt-","aerg-","adaf-","adag-","aenth-"].map(k=>k+antragId));
   SV.actions._refresh();
 };
 SV.actions.deleteAntrag = async function(kind, containerId, itemId, antragId){
@@ -1860,6 +2165,7 @@ SV.actions.deleteAntrag = async function(kind, containerId, itemId, antragId){
     const a = it.antraege.find(x=>x.id===antragId);
     if(a){ a.deleted_at = SV.util.nowIso(); it.geloeschte_antraege.push(a); it.antraege = it.antraege.filter(x=>x.id!==antragId); }
   });
+  SV.drafts.clear(...["atxt-","abtxt-","aerg-","adaf-","adag-","aenth-"].map(k=>k+antragId));
   SV.actions._refresh();
 };
 SV.actions.restoreAntrag = async function(kind, containerId, itemId, antragId){
@@ -2053,6 +2359,10 @@ SV.router = {
       } else {
         app.innerHTML = `<div class="card">${SV.t("err_page_not_found")}</div>`;
       }
+      // Version 1.11.0: ungespeicherte Eingaben wieder einsetzen, Textfelder
+      // auf ihren Inhalt vergroessern.
+      SV.drafts.restore();
+      SV.util.installAutoGrow(app);
       if(SV.state.scrollTarget){
         const el = document.getElementById(SV.state.scrollTarget);
         if(el) setTimeout(()=>el.scrollIntoView({behavior:"smooth", block:"start"}), 50);
@@ -2167,7 +2477,7 @@ SV.views._blockRow = function(kind, containerId, item, b, editable){
   if(!editable) return `<div class="small" style="margin-bottom:6px;">${labelHtml}${SV.textformat.renderSegmentsHtml(b.content)}</div>`;
   return `<div style="margin-bottom:8px;">
     ${labelHtml}
-    <textarea id="${taId}">${SV.util.esc(b.content)}</textarea>
+    ${SV.editor.ta(taId, b.content)}
     <div class="btn-row" style="margin-top:4px;">
       <button class="secondary" onclick="SV.actions.editBlock('${kind}','${containerId}','${item.id}','${b.id}','${taId}')">${SV.t("btn_save")}</button>
       <button class="danger" onclick="SV.actions.deleteBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_delete")}</button>
@@ -2184,9 +2494,10 @@ SV.views.renderBlocksSection = function(kind, containerId, item, editable){
         <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('${kind}','${containerId}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details>` : "";
   const addForm = editable ? `
-    <div style="margin-top:6px;">
-      <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
-      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('${kind}','${containerId}','${item.id}','newblk-${item.id}')">${n?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
+    <div class="new-entry">
+      <div class="new-entry-title">${SV.t("new_block_heading")}</div>
+      ${SV.editor.ta("newblk-"+item.id, "", SV.t("placeholder_block_text"))}
+      <button style="margin-top:4px;" onclick="SV.actions.addBlock('${kind}','${containerId}','${item.id}','newblk-${item.id}')">${SV.t("btn_save_new_block")}</button>
     </div>` : "";
   return `<details ${n?"":""}><summary>${SV.t("blocks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
@@ -2198,7 +2509,7 @@ SV.views.renderTasksSection = function(kind, containerId, item, editable){
       <span class="muted small">${SV.t("label_responsible")}: ${SV.util.esc(t.verantwortlich)} · ${SV.t("label_due")}: ${SV.util.dmy(t.termin)}</span>
       <span class="tag ${t.status==='erledigt'?'done':'status'}">${SV.util.esc(SV.aufgaben.statusLabel(t.status))}</span></div>`;
     return `<div class="list-item">
-      <textarea id="txt-${t.id}">${SV.util.esc(t.text)}</textarea>
+      ${SV.editor.ta("txt-"+t.id, t.text)}
       <div class="row" style="margin-top:4px;">
         <div><label>${SV.t("label_responsible")}</label><input type="text" id="ver-${t.id}" value="${SV.util.esc(t.verantwortlich)}"></div>
         <div><label>${SV.t("label_due")}</label><input type="date" id="ter-${t.id}" value="${SV.util.esc(t.termin)}"></div>
@@ -2216,13 +2527,18 @@ SV.views.renderTasksSection = function(kind, containerId, item, editable){
         <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreTask('${kind}','${containerId}','${item.id}','${t.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details>` : "";
   const addForm = editable ? `
-    <div class="row" style="margin-top:6px;">
-      <div><label>${SV.t("label_task")}</label><input type="text" id="newtask-text-${item.id}"></div>
-      <div><label>${SV.t("label_responsible")}</label><input type="text" id="newtask-ver-${item.id}"></div>
-      <div><label>${SV.t("label_due")}</label><input type="date" id="newtask-ter-${item.id}"></div>
-      <div style="flex:0;"><button class="secondary" onclick="SV.actions.addTask('${kind}','${containerId}','${item.id}','newtask-text-${item.id}','newtask-ver-${item.id}','newtask-ter-${item.id}')">${n?SV.t("btn_add_task_more"):SV.t("btn_add_task")}</button></div>
+    <div class="new-entry">
+      <div class="new-entry-title">${SV.t("new_task_heading")}</div>
+      ${SV.editor.ta("newtask-text-"+item.id, "")}
+      <div class="row" style="margin-top:4px;">
+        <div><label>${SV.t("label_responsible")}</label><input type="text" id="newtask-ver-${item.id}"></div>
+        <div><label>${SV.t("label_due")}</label><input type="date" id="newtask-ter-${item.id}"></div>
+        <div style="flex:0;"><button onclick="SV.actions.addTask('${kind}','${containerId}','${item.id}','newtask-text-${item.id}','newtask-ver-${item.id}','newtask-ter-${item.id}')">${SV.t("btn_save_new_task")}</button></div>
+      </div>
     </div>` : "";
-  return `<details><summary>${SV.t("tasks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
+  // Version 1.11.0: sobald Aufgaben vorhanden sind, bleibt der Abschnitt
+  // aufgeklappt (wie Anhaenge/Antraege).
+  return `<details ${n?"open":""}><summary>${SV.t("tasks_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
 
 SV.actions.editTaskFull = async function(kind, containerId, itemId, taskId){
@@ -2235,6 +2551,7 @@ SV.actions.editTaskFull = async function(kind, containerId, itemId, taskId){
     const t = it.aufgaben.find(x=>x.id===taskId);
     if(t){ t.text = SV.textformat.cleanBlockContent(text); t.verantwortlich=ver; t.termin=ter; t.status=st; }
   });
+  SV.drafts.clear("txt-"+taskId, "ver-"+taskId, "ter-"+taskId, "st-"+taskId);
   SV.actions._refresh();
 };
 
@@ -2262,8 +2579,8 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable, aut
       <span class="tag status">${SV.util.esc(SV.beschluss.label(a.ergebnis))}</span>
       <span class="muted small">${SV.t("label_dafuer")} ${a.dafuer} · ${SV.t("label_dagegen")} ${a.dagegen} · ${SV.t("label_enthaltung")} ${a.enthaltung}</span></div>`;
     return `<div class="list-item">
-      <label>${SV.t("label_antrag")}</label><textarea id="atxt-${a.id}">${SV.util.esc(a.antrag_text)}</textarea>
-      <label>${SV.t("label_beschluss")}</label><textarea id="abtxt-${a.id}">${SV.util.esc(a.beschluss_text)}</textarea>
+      <label>${SV.t("label_antrag")}</label>${SV.editor.ta("atxt-"+a.id, a.antrag_text)}
+      <label>${SV.t("label_beschluss")}</label>${SV.editor.ta("abtxt-"+a.id, a.beschluss_text)}
       <div class="row" style="margin-top:4px;">
         <div><label>${SV.t("label_ergebnis")}</label><select id="aerg-${a.id}">${ergOptions(a.ergebnis)}</select></div>
         <div><label>${SV.t("label_dafuer")}</label><input type="number" min="0" id="adaf-${a.id}" value="${a.dafuer}"></div>
@@ -2297,16 +2614,17 @@ SV.views.renderAntraegeSection = function(kind, containerId, item, editable, aut
         <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreAntrag('${kind}','${containerId}','${item.id}','${a.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
     </details>` : "";
   const addForm = editable ? `
-    <div style="margin-top:6px;">
-      <label>${SV.t("label_antrag")}</label><textarea id="newa-atxt-${item.id}"></textarea>
-      <label>${SV.t("label_beschluss")}</label><textarea id="newa-abtxt-${item.id}"></textarea>
+    <div class="new-entry">
+      <div class="new-entry-title">${SV.t("new_antrag_heading")}</div>
+      <label>${SV.t("label_antrag")}</label>${SV.editor.ta("newa-atxt-"+item.id, "")}
+      <label>${SV.t("label_beschluss")}</label>${SV.editor.ta("newa-abtxt-"+item.id, "")}
       <div class="row" style="margin-top:4px;">
         <div><label>${SV.t("label_ergebnis")}</label><select id="newa-erg-${item.id}">${ergOptions("offen")}</select></div>
         <div><label>${SV.t("label_dafuer")}</label><input type="number" min="0" id="newa-daf-${item.id}" value="0"></div>
         <div><label>${SV.t("label_dagegen")}</label><input type="number" min="0" id="newa-dag-${item.id}" value="0"></div>
         <div><label>${SV.t("label_enthaltung")}</label><input type="number" min="0" id="newa-enth-${item.id}" value="0"></div>
       </div>
-      <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addAntrag('${kind}','${containerId}','${item.id}',{antrag_text:SV.util.byId('newa-atxt-${item.id}').value,beschluss_text:SV.util.byId('newa-abtxt-${item.id}').value,ergebnis:SV.util.byId('newa-erg-${item.id}').value,dafuer:+SV.util.byId('newa-daf-${item.id}').value,dagegen:+SV.util.byId('newa-dag-${item.id}').value,enthaltung:+SV.util.byId('newa-enth-${item.id}').value})">${n?SV.t("btn_add_antrag_more"):SV.t("btn_add_antrag")}</button>
+      <button style="margin-top:6px;" onclick="SV.actions.addAntrag('${kind}','${containerId}','${item.id}',{antrag_text:SV.util.byId('newa-atxt-${item.id}').value,beschluss_text:SV.util.byId('newa-abtxt-${item.id}').value,ergebnis:SV.util.byId('newa-erg-${item.id}').value,dafuer:+SV.util.byId('newa-daf-${item.id}').value,dagegen:+SV.util.byId('newa-dag-${item.id}').value,enthaltung:+SV.util.byId('newa-enth-${item.id}').value})">${SV.t("btn_save_new_antrag")}</button>
     </div>` : "";
   return `<details ${autoOpen?"open":""}><summary>${SV.t("antraege_summary", n)}</summary><div style="margin-top:6px;">${rows}${trash}${addForm}</div></details>`;
 };
@@ -2625,6 +2943,7 @@ SV.actions.updateAgendaMeta = async function(ev, agendaId){
   const date = SV.util.byId("editAgendaDate").value;
   if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
   await SV.actions._mutate("agenda", agendaId, (c)=>{ c.title=title; c.date=date; });
+  SV.drafts.clear("editAgendaTitle", "editAgendaDate");
   SV.router.go();
 };
 
@@ -2878,9 +3197,10 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
           <button class="secondary" style="padding:2px 8px;" onclick="SV.actions.restoreBlock('meeting','${meeting.id}','${item.id}','${b.id}')">${SV.t("btn_restore")}</button></div>`).join("")}
       </details>` : "";
     const extraAddForm = `
-      <div style="margin-top:6px;">
-        <textarea id="newblk-${item.id}" placeholder="${SV.t("placeholder_block_text")}"></textarea>
-        <button class="secondary" style="margin-top:4px;" onclick="SV.actions.addBlock('meeting','${meeting.id}','${item.id}','newblk-${item.id}')">${extraBlocks.length?SV.t("btn_add_block_more"):SV.t("btn_add_block")}</button>
+      <div class="new-entry">
+        <div class="new-entry-title">${SV.t("new_block_heading")}</div>
+        ${SV.editor.ta("newblk-"+item.id, "", SV.t("placeholder_block_text"))}
+        <button style="margin-top:4px;" onclick="SV.actions.addBlock('meeting','${meeting.id}','${item.id}','newblk-${item.id}')">${SV.t("btn_save_new_block")}</button>
       </div>`;
     const extraBlocksSection = `
       <details>
@@ -2949,10 +3269,16 @@ SV.views.meetingRun = async function(app, meetingId, itemId){
   app.innerHTML = `
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
     <div class="card">
-      <form class="row" onsubmit="SV.actions.updateMeetingMeta(event,'${meeting.id}')">
-        <div><label>${SV.t("label_title")}</label><input type="text" id="editMeetingTitle" required value="${SV.util.esc(meeting.title)}"></div>
-        <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editMeetingDate" value="${SV.util.esc(meeting.date)}"></div>
-        <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
+      <form onsubmit="SV.actions.updateMeetingMeta(event,'${meeting.id}')">
+        <div class="row">
+          <div><label>${SV.t("label_title")}</label><input type="text" id="editMeetingTitle" required value="${SV.util.esc(meeting.title)}"></div>
+          <div><label>${SV.t("label_date_optional")}</label><input type="date" id="editMeetingDate" value="${SV.util.esc(meeting.date)}"></div>
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <div style="flex:3;"><label>${SV.t("label_teilnehmer")}</label><textarea id="editMeetingTeilnehmer" placeholder="${SV.t("placeholder_teilnehmer")}" style="min-height:2.4em;">${SV.util.esc(meeting.teilnehmer||"")}</textarea></div>
+          <div style="flex:0;"><button type="submit">${SV.t("btn_save")}</button></div>
+        </div>
+        ${meeting.intro_note ? `<div style="margin-top:8px;"><label>${SV.t("label_intro_note")}</label><textarea id="editMeetingNote" style="min-height:2.4em;">${SV.util.esc(meeting.intro_note)}</textarea></div>` : ``}
       </form>
       <label style="display:inline-flex; align-items:center; gap:6px; margin-top:10px;">
         <input type="checkbox" id="editMeetingShowTimer" ${meeting.showTimerInProtocol?'checked':''} style="width:auto;" onchange="SV.actions.toggleShowTimerInProtocol('${meeting.id}', this.checked)">
@@ -3000,8 +3326,16 @@ SV.actions.updateMeetingMeta = async function(ev, meetingId){
   ev.preventDefault();
   const title = SV.util.byId("editMeetingTitle").value.trim();
   const date = SV.util.byId("editMeetingDate").value;
+  const tnEl = SV.util.byId("editMeetingTeilnehmer");
+  const noteEl = SV.util.byId("editMeetingNote");
   if(!title){ SV.ui.toast(SV.t("toast_title_required")); return; }
-  await SV.actions._mutate("meeting", meetingId, (c)=>{ c.title=title; c.date=date; });
+  await SV.actions._mutate("meeting", meetingId, (c)=>{
+    c.title=title; c.date=date;
+    if(tnEl) c.teilnehmer = SV.textformat.cleanBlockContent(tnEl.value);
+    if(noteEl) c.intro_note = SV.textformat.cleanBlockContent(noteEl.value);
+  });
+  SV.drafts.clear("editMeetingTitle", "editMeetingDate", "editMeetingTeilnehmer", "editMeetingNote");
+  SV.ui.toast(SV.t("toast_saved"));
   SV.router.go();
 };
 SV.actions.toggleShowTimerInProtocol = async function(meetingId, checked){
@@ -3067,6 +3401,8 @@ SV.views.meetingView = function(app, meeting){
     <p><a href="#/meetings">${SV.t("back_to_meetings")}</a></p>
     <h1>${SV.util.esc(meeting.title)||SV.t("no_title")}</h1>
     <p class="muted">${meeting.date?SV.util.dmy(meeting.date):SV.t("no_date")} · ${SV.t("status_done_label")}${meeting.completed_at?SV.t("completed_on", SV.util.dmy(meeting.completed_at.slice(0,10))):""}</p>
+    ${meeting.teilnehmer ? `<div class="small" style="margin-bottom:10px;"><strong>${SV.t("label_teilnehmer")}:</strong>${SV.textformat.renderSegmentsHtml(meeting.teilnehmer)}</div>` : ``}
+    ${meeting.intro_note ? `<div class="small muted" style="margin-bottom:10px;"><strong>${SV.t("label_intro_note")}:</strong>${SV.textformat.renderSegmentsHtml(meeting.intro_note)}</div>` : ``}
     <div class="card closed-banner" style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; justify-content:space-between;">
       <span class="small">${SV.t("closed_banner_text")}</span>
       <button id="btnReopenTop" onclick="SV.actions.reopenMeeting('${meeting.id}')">${SV.t("btn_reopen_top")}</button>
@@ -3416,18 +3752,66 @@ SV.pdf = {
     });
     state.y += (opts.after||0);
   },
+  // Seit Version 1.11.0: Zeilenumbruch mit gemischten Schriftschnitten
+  // (**fett**/*kursiv*). Liefert Zeilen als Listen von {text, font}.
+  fontStyle(run){ return run.bold ? "bold" : (run.italic ? "italic" : "normal"); },
+  richLines(doc, str, maxW, size){
+    doc.setFontSize(size);
+    const words = [];
+    SV.textformat.inlineRuns(str).forEach(run=>{
+      const style = SV.pdf.fontStyle(run);
+      run.text.split(/(\s+)/).forEach(part=>{ if(part!=="") words.push({text:part, style, space:/^\s+$/.test(part)}); });
+    });
+    const width = (w)=>{ doc.setFont("helvetica", w.style); return doc.getTextWidth(w.text); };
+    const lines = []; let cur = []; let curW = 0;
+    const pushLine = ()=>{ while(cur.length && cur[cur.length-1].space) cur.pop(); lines.push(cur); cur = []; curW = 0; };
+    words.forEach(w=>{
+      if(w.space){ if(cur.length){ cur.push({text:" ", style:w.style, space:true}); curW += width({text:" ", style:w.style}); } return; }
+      let ww = width(w);
+      if(curW + ww > maxW && cur.length) pushLine();
+      // ueberlange Woerter hart umbrechen
+      while(ww > maxW && w.text.length > 1){
+        let k = w.text.length;
+        while(k > 1 && width({text:w.text.slice(0,k), style:w.style}) > maxW) k--;
+        cur.push({text:w.text.slice(0,k), style:w.style}); pushLine();
+        w = {text:w.text.slice(k), style:w.style}; ww = width(w);
+      }
+      cur.push(w); curW += ww;
+    });
+    if(cur.length || !lines.length) pushLine();
+    return lines;
+  },
+  drawRichLine(doc, line, x, y){
+    let cx = x;
+    line.forEach(w=>{
+      doc.setFont("helvetica", w.style);
+      if(!w.space) doc.text(w.text, cx, y);
+      cx += doc.getTextWidth(w.text);
+    });
+    doc.setFont("helvetica", "normal");
+  },
+  richText(state, str, indentMm, size){
+    size = size || 10.5;
+    const lines = SV.pdf.richLines(state.doc, str, SV.pdf.usableWidth(state) - indentMm, size);
+    const lh = size*0.42;
+    lines.forEach(line=>{
+      SV.pdf.ensure(state, lh);
+      SV.pdf.drawRichLine(state.doc, line, SV.pdf.MARGIN+indentMm, state.y);
+      state.y += lh;
+    });
+  },
   bulletLine(state, marker, str, indentMm, size){
     size = size || 10.5;
     const doc = state.doc;
     doc.setFont("helvetica","normal"); doc.setFontSize(size);
-    const markerW = 6;
+    const markerW = Math.max(6, doc.getTextWidth(marker) + 2);
     const maxW = SV.pdf.usableWidth(state) - indentMm - markerW;
-    const lines = doc.splitTextToSize(str, Math.max(maxW,20));
+    const lines = SV.pdf.richLines(doc, str, Math.max(maxW,20), size);
     const lh = size*0.42;
     lines.forEach((line,i)=>{
       SV.pdf.ensure(state, lh);
-      if(i===0) doc.text(marker, SV.pdf.MARGIN+indentMm, state.y);
-      doc.text(line, SV.pdf.MARGIN+indentMm+markerW, state.y);
+      if(i===0){ doc.setFont("helvetica","normal"); doc.text(marker, SV.pdf.MARGIN+indentMm, state.y); }
+      SV.pdf.drawRichLine(doc, line, SV.pdf.MARGIN+indentMm+markerW, state.y);
       state.y += lh;
     });
   },
@@ -3440,12 +3824,15 @@ SV.pdf = {
         if(t.trim()==="") return;
         t.split("\n").forEach(line=>{
           if(line.trim()==="") { state.y += 2; return; }
-          SV.pdf.text(state, line, {indent:indentBase, size:10.5});
+          SV.pdf.richText(state, line, indentBase, 10.5);
         });
       } else {
-        const marker = seg.depth===0 ? "•" : "–";
         const indentMm = indentBase + (seg.depth===0 ? 2 : 8 + (seg.depth-1)*8);
-        seg.items.forEach(it=> SV.pdf.bulletLine(state, marker, it, indentMm));
+        seg.items.forEach((it,i)=>{
+          const num = seg.nums && seg.nums[i];
+          const marker = num ? num+"." : (seg.depth===0 ? "•" : "–");
+          SV.pdf.bulletLine(state, marker, it, indentMm);
+        });
       }
     });
   },
@@ -3597,6 +3984,18 @@ SV.pdf = {
     const state = SV.pdf.newState(doc);
     SV.pdf.header(state, SV.t("pdf_protocol_title", meeting.title||SV.t("no_title")),
       (meeting.date?SV.t("pdf_date_label", SV.util.dmy(meeting.date)):"") + (full?SV.t("pdf_full_version"):SV.t("pdf_public_version")));
+    // Version 1.11.0: Teilnehmer (in beiden Fassungen), Bemerkungen aus
+    // migrierten Altdaten nur in der vollstaendigen Fassung.
+    if(meeting.teilnehmer){
+      SV.pdf.text(state, SV.t("pdf_teilnehmer_label"), {bold:true, size:10.5});
+      SV.pdf.segments(state, meeting.teilnehmer, 4);
+      state.y += 2;
+    }
+    if(full && meeting.intro_note){
+      SV.pdf.text(state, SV.t("label_intro_note")+":", {bold:true, size:10.5});
+      SV.pdf.segments(state, meeting.intro_note, 4);
+      state.y += 2;
+    }
     const attachmentRefs = [];
     SV.model.numberedItems(meeting.items).forEach(({item,number,depth})=>{
       if(!full && !item.public) return;
@@ -3639,7 +4038,7 @@ SV.pdf = {
       const w = SV.pdf.usableWidth(state);
       const colWidths = [22, 36, 48, 48, 20];
       SV.pdf.table(state, [SV.t("pdf_col_date"),SV.t("pdf_col_top"),SV.t("pdf_col_antrag"),SV.t("pdf_col_beschluss"),SV.t("pdf_col_ergebnis")], entries.map(({a,meeting,item})=>[
-        meeting.date?SV.util.dmy(meeting.date):"", item.title||"", a.antrag_text||"", a.beschluss_text||"", SV.beschluss.label(a.ergebnis)||"",
+        meeting.date?SV.util.dmy(meeting.date):"", item.title||"", SV.textformat.plain(a.antrag_text), SV.textformat.plain(a.beschluss_text), SV.beschluss.label(a.ergebnis)||"",
       ]), colWidths);
     } else {
       entries.forEach(({a,meeting,item})=>{
@@ -3661,7 +4060,7 @@ SV.pdf = {
     if(format==="tabelle"){
       const colWidths = orientation==="L" ? [26,34,32,80,40,30,25] : [18,24,22,46,30,22,18];
       SV.pdf.table(state, [SV.t("pdf_col_team"),SV.t("pdf_col_date"),SV.t("pdf_col_top"),SV.t("pdf_col_aufgabe"),SV.t("pdf_col_verantwortlich"),SV.t("pdf_col_termin"),SV.t("pdf_col_status")], entries.map(e=>[
-        e.teamName, e.containerDate?SV.util.dmy(e.containerDate):"", e.containerTitle||"", e.task.text, e.task.verantwortlich,
+        e.teamName, e.containerDate?SV.util.dmy(e.containerDate):"", e.containerTitle||"", SV.textformat.plain(e.task.text), e.task.verantwortlich,
         SV.util.dmy(e.task.termin), SV.aufgaben.statusLabel(e.task.status),
       ]), colWidths);
     } else {
@@ -4133,6 +4532,7 @@ SV.app = {
   init(){
     SV.i18n.init();
     SV.settings.init();
+    SV.editor.installGlobal();
     SV.app.registerSW();
     SV.router.go();
   },
